@@ -1,10 +1,22 @@
+export type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock';
+
+export interface ProductVariant {
+  id: string;        // e.g. "round", "oval"
+  name: string;      // e.g. "Round", "Oval"
+  stock: number;     // how many of this shape
+  buyPrice?: number; // optional – cost price for this shape
+  sellPrice?: number;// optional – sell price for this shape
+}
+
 export interface Product {
   id: string;
   name: string;
-  category: string;
-  price: number;
-  stock: number;
-  status: 'In Stock' | 'Low Stock' | 'Out of Stock';
+  price: number;        // main selling price
+  costPrice?: number;   // main buying price
+  stock: number;        // total stock (sum of all variants, or simple stock if no variants)
+  status: StockStatus;
+  hasVariants?: boolean;
+  variants?: ProductVariant[];
 }
 
 export interface Sale {
@@ -12,22 +24,32 @@ export interface Sale {
   date: string;
   amount: number;
   customer: string;
+  productName: string; // Added to track which product was sold
   items: number;
 }
 
+export interface AdCost {
+  id: string;
+  platform: string; // e.g. "Google Ads", "Facebook", "Instagram"
+  amount: number;
+  date: string;
+  notes?: string;
+}
+
+// Added Customer interface to fix import error in CustomersView.tsx
 export interface Customer {
   id: string;
   name: string;
   email: string;
   totalSpent: number;
-  lastOrder: string;
 }
 
 export interface BusinessStats {
   totalRevenue: number;
   totalOrders: number;
-  activeCustomers: number;
+  totalAdSpend: number;
   inventoryValue: number;
 }
 
-export type ViewType = 'dashboard' | 'inventory' | 'sales' | 'customers';
+// Updated ViewType to include 'customers'
+export type ViewType = 'dashboard' | 'inventory' | 'sales' | 'adCosts' | 'customers';
