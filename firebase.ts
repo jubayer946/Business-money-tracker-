@@ -1,4 +1,4 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration from Console
@@ -12,8 +12,8 @@ const firebaseConfig = {
   appId: "1:658925390299:web:04449b2c493b1675a4bffe"
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase - using singleton pattern to avoid multiple instances in dev
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
