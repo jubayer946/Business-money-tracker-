@@ -1,3 +1,4 @@
+
 export type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock';
 
 export interface ProductVariant {
@@ -28,11 +29,17 @@ export interface Sale {
   items: number;
 }
 
+export interface AdPlatform {
+  id: string;
+  name: string;
+}
+
 export interface AdCost {
   id: string;
   platform: string; // e.g. "Google Ads", "Facebook", "Instagram"
   amount: number;
-  date: string;
+  date: string;     // Represents start date
+  endDate?: string; // Optional end date for range-based expenses
   notes?: string;
 }
 

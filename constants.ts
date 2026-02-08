@@ -1,5 +1,5 @@
 
-import { Product, Sale, AdCost } from './types';
+import { Product, Sale, AdCost, AdPlatform } from './types';
 
 export const MOCK_PRODUCTS: Product[] = [
   {
@@ -21,13 +21,22 @@ export const MOCK_PRODUCTS: Product[] = [
   { id: '4', name: 'Bamboo Stirrers', price: 5.99, costPrice: 1.20, stock: 0, status: 'Out of Stock' },
 ];
 
-// Added productName to mock sales data to fix type errors
 export const MOCK_SALES: Sale[] = [
   { id: '1001', date: '2023-10-20', amount: 156.40, customer: 'John Doe', productName: 'Ball', items: 3 },
   { id: '1002', date: '2023-10-21', amount: 45.00, customer: 'Jane Smith', productName: 'Premium Coffee Beans', items: 1 },
   { id: '1003', date: '2023-10-21', amount: 89.20, customer: 'Mike Ross', productName: 'Organic Matcha Powder', items: 2 },
   { id: '1004', date: '2023-10-22', amount: 210.15, customer: 'Sarah Connor', productName: 'Glass Storage Jars', items: 5 },
   { id: '1005', date: '2023-10-23', amount: 12.50, customer: 'Harvey Specter', productName: 'Bamboo Stirrers', items: 1 },
+];
+
+export const DEFAULT_PLATFORMS: AdPlatform[] = [
+  { id: 'p1', name: 'Google Ads' },
+  { id: 'p2', name: 'Facebook' },
+  { id: 'p3', name: 'Instagram' },
+  { id: 'p4', name: 'TikTok' },
+  { id: 'p5', name: 'Snapchat' },
+  { id: 'p6', name: 'LinkedIn' },
+  { id: 'p7', name: 'Other' },
 ];
 
 export const MOCK_AD_COSTS: AdCost[] = [
