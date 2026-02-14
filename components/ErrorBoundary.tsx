@@ -1,5 +1,5 @@
 
-import React, { ErrorInfo, ReactNode } from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
@@ -17,8 +17,8 @@ interface State {
 /**
  * ErrorBoundary catches errors in its child component tree.
  */
-// Use React.Component explicitly to ensure inherited members like setState and props are correctly recognized.
-export class ErrorBoundary extends React.Component<Props, State> {
+// Fix: Use Component named import to ensure inherited members like setState and props are correctly recognized.
+export class ErrorBoundary extends Component<Props, State> {
   public state: State = { 
     hasError: false, 
     error: null, 
@@ -37,7 +37,7 @@ export class ErrorBoundary extends React.Component<Props, State> {
    */
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    // Use setState from the base React.Component class.
+    // Fix: Use setState from the base Component class.
     this.setState({ errorInfo });
   }
 
@@ -45,13 +45,14 @@ export class ErrorBoundary extends React.Component<Props, State> {
    * Reset the error state, allowing the user to attempt a reload.
    */
   private handleRetry = () => {
-    // Use setState from the base React.Component class to reset the error state.
+    // Fix: Use setState from the base Component class to reset the error state.
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   public render() {
     // Access state and props from the base Component class.
     const { hasError, error, errorInfo } = this.state;
+    // Fix: Access props from the base Component class.
     const { children, fallback } = this.props;
 
     // Check if an error has been caught and render fallback if necessary.
