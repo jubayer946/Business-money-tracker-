@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Plus, Edit2, Trash2, Package, ShoppingCart, Receipt, Settings, History } from 'lucide-react';
 import { AuditLogEntry } from '../types';
-import { formatRelativeDate } from '../utils/formatters';
+import { formatRelativeDate, formatFullDateTime } from '../utils/formatters';
 
 interface ActivityFeedProps {
   entries: AuditLogEntry[];
@@ -67,19 +66,23 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                 <div className="mt-1 flex flex-wrap gap-1">
                   {Object.entries(entry.changes).map(([key, val]) => (
                     <span key={key} className="text-[9px] font-black uppercase text-slate-400 bg-slate-50 dark:bg-slate-800/50 px-1.5 py-0.5 rounded">
-                      {/* Explicitly cast val to any to avoid "unknown" type inference issue in some TS environments */}
                       {key}: {(val as any).from} → {(val as any).to}
                     </span>
                   ))}
                 </div>
               )}
 
-              <div className="flex items-center space-x-2 mt-1.5">
-                <span className="text-[10px] font-bold text-slate-400">
-                  {formatRelativeDate(entry.timestamp)}
-                </span>
-                <span className="text-slate-200 dark:text-slate-800">•</span>
-                <span className="flex items-center space-x-1 text-[10px] font-black uppercase text-indigo-400 dark:text-indigo-500 tracking-wider">
+              <div className="flex flex-col space-y-1 mt-2">
+                <div className="flex items-center space-x-2">
+                  <span className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tighter">
+                    {formatFullDateTime(entry.timestamp)}
+                  </span>
+                  <span className="text-slate-200 dark:text-slate-800">•</span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    {formatRelativeDate(entry.timestamp)}
+                  </span>
+                </div>
+                <span className="flex items-center space-x-1 text-[9px] font-black uppercase text-indigo-400 dark:text-indigo-500 tracking-widest">
                   {getCollectionIcon(entry.collection)}
                   <span>{entry.collection}</span>
                 </span>

@@ -47,9 +47,11 @@ export const formatPercent = (
 
 /**
  * Format relative date (e.g., "Today", "2 days ago")
+ * Handles both YYYY-MM-DD and ISO string formats
  */
 export const formatRelativeDate = (dateStr: string): string => {
-  const date = new Date(dateStr + 'T00:00:00');
+  const cleanStr = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  const date = new Date(cleanStr + 'T00:00:00');
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   
@@ -72,11 +74,26 @@ export const formatDate = (
   options: { format?: 'short' | 'medium' | 'long' } = {}
 ): string => {
   const { format = 'medium' } = options;
-  const date = new Date(dateStr + 'T00:00:00');
+  const cleanStr = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  const date = new Date(cleanStr + 'T00:00:00');
   const formats = {
     short: { month: 'numeric' as const, day: 'numeric' as const },
     medium: { month: 'short' as const, day: 'numeric' as const, year: 'numeric' as const },
     long: { weekday: 'long' as const, month: 'long' as const, day: 'numeric' as const, year: 'numeric' as const },
   };
   return date.toLocaleDateString(locale, formats[format]);
+};
+
+/**
+ * Format full timestamp into human readable string
+ */
+export const formatFullDateTime = (isoStr: string): string => {
+  const date = new Date(isoStr);
+  return date.toLocaleString(locale, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
 };
