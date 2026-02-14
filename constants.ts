@@ -1,47 +1,109 @@
-
 import { Product, Sale, AdCost, AdPlatform } from './types';
+import { getLocalDateString, getDateDaysAgo } from './utils';
 
 export const MOCK_PRODUCTS: Product[] = [
   {
-    id: 'ball-1',
-    name: 'Ball',
-    price: 70,
-    costPrice: 20,
+    id: 'nigiri-nami',
+    name: 'Nigiri: Regular',
+    price: 12.00,
+    costPrice: 4.50,
+    stock: 50,
+    status: 'In Stock'
+  },
+  {
+    id: 'nigiri-jo',
+    name: 'Nigiri: Deluxe',
+    price: 18.50,
+    costPrice: 7.00,
     stock: 30,
+    status: 'In Stock'
+  },
+  {
+    id: 'nigiri-tokujo',
+    name: 'Nigiri: Premium',
+    price: 24.00,
+    costPrice: 9.00,
+    stock: 20,
+    status: 'In Stock'
+  },
+  {
+    id: 'chirashi-nami',
+    name: 'Chirashi: Regular',
+    price: 15.00,
+    costPrice: 5.50,
+    stock: 40,
+    status: 'In Stock'
+  },
+  {
+    id: 'tekka-don',
+    name: 'Tuna Donburi',
+    price: 14.50,
+    costPrice: 6.00,
+    stock: 25,
+    status: 'In Stock'
+  },
+  {
+    id: 'dashimaki',
+    name: 'Tamagoyaki Omelet',
+    price: 6.50,
+    costPrice: 1.50,
+    stock: 15,
+    status: 'In Stock'
+  },
+  {
+    id: 'sushi-platter',
+    name: 'Mixed Sushi Platter',
+    price: 35.00,
+    costPrice: 12.00,
+    stock: 10,
     status: 'In Stock',
     hasVariants: true,
     variants: [
-      { id: 'round', name: 'Round', stock: 10, buyPrice: 20, sellPrice: 70 },
-      { id: 'oval',  name: 'Oval',  stock: 20, buyPrice: 20, sellPrice: 70 },
-    ],
-  },
-  { id: '1', name: 'Premium Coffee Beans', price: 24.99, costPrice: 10.00, stock: 45, status: 'In Stock' },
-  { id: '2', name: 'Organic Matcha Powder', price: 35.00, costPrice: 15.00, stock: 8, status: 'Low Stock' },
-  { id: '3', name: 'Glass Storage Jars', price: 12.50, costPrice: 4.50, stock: 120, status: 'In Stock' },
-  { id: '4', name: 'Bamboo Stirrers', price: 5.99, costPrice: 1.20, stock: 0, status: 'Out of Stock' },
+      { id: 'platter-medium', name: 'Medium (12pc)', stock: 5 },
+      { id: 'platter-large', name: 'Large (20pc)', stock: 5 }
+    ]
+  }
 ];
 
 export const MOCK_SALES: Sale[] = [
-  { id: '1001', date: '2023-10-20', amount: 156.40, customer: 'John Doe', productName: 'Ball', items: 3 },
-  { id: '1002', date: '2023-10-21', amount: 45.00, customer: 'Jane Smith', productName: 'Premium Coffee Beans', items: 1 },
-  { id: '1003', date: '2023-10-21', amount: 89.20, customer: 'Mike Ross', productName: 'Organic Matcha Powder', items: 2 },
-  { id: '1004', date: '2023-10-22', amount: 210.15, customer: 'Sarah Connor', productName: 'Glass Storage Jars', items: 5 },
-  { id: '1005', date: '2023-10-23', amount: 12.50, customer: 'Harvey Specter', productName: 'Bamboo Stirrers', items: 1 },
+  { 
+    id: '1001', 
+    productId: 'nigiri-tokujo',
+    date: getLocalDateString(), 
+    amount: 24.00, 
+    productName: 'Nigiri: Premium', 
+    items: 1, 
+    status: 'Paid'
+  },
+  { 
+    id: '1002', 
+    productId: 'chirashi-nami',
+    date: getDateDaysAgo(1), 
+    amount: 30.00, 
+    productName: 'Chirashi: Regular', 
+    items: 2, 
+    status: 'Paid'
+  },
+  {
+    id: '1003',
+    productId: 'sushi-platter',
+    variantId: 'platter-medium',
+    date: getDateDaysAgo(2),
+    amount: 35.00,
+    productName: 'Mixed Sushi Platter',
+    variantName: 'Medium (12pc)',
+    items: 1,
+    status: 'Paid'
+  }
 ];
 
 export const DEFAULT_PLATFORMS: AdPlatform[] = [
-  { id: 'p1', name: 'Google Ads' },
-  { id: 'p2', name: 'Facebook' },
-  { id: 'p3', name: 'Instagram' },
-  { id: 'p4', name: 'TikTok' },
-  { id: 'p5', name: 'Snapchat' },
-  { id: 'p6', name: 'LinkedIn' },
-  { id: 'p7', name: 'Other' },
+  { id: 'p1', name: 'Google Ads', order: 0 },
+  { id: 'p2', name: 'Facebook', order: 1 },
+  { id: 'p3', name: 'Instagram', order: 2 },
+  { id: 'p4', name: 'Other', order: 3 },
 ];
 
 export const MOCK_AD_COSTS: AdCost[] = [
-  { id: 'ad-1', platform: 'Google Ads', amount: 450.00, date: '2023-10-15', notes: 'Search Campaign' },
-  { id: 'ad-2', platform: 'Facebook', amount: 320.50, date: '2023-10-18', notes: 'Retargeting' },
-  { id: 'ad-3', platform: 'Instagram', amount: 150.00, date: '2023-10-20', notes: 'Influencer Post' },
-  { id: 'ad-4', platform: 'Google Ads', amount: 200.00, date: '2023-10-22', notes: 'Display Ads' },
+  { id: 'ad-1', platform: 'Leaflet Printing', amount: 45.00, date: getDateDaysAgo(7), notes: 'Local neighborhood posting' },
 ];

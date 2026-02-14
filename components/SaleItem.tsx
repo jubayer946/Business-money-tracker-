@@ -1,5 +1,5 @@
 import React from 'react';
-import { DollarSign, Tag, Calendar, Hash, Edit2, Trash2, ChevronDown } from 'lucide-react';
+import { DollarSign, Calendar, Hash, Edit2, Trash2, ChevronDown } from 'lucide-react';
 import { Sale } from '../types';
 
 interface SaleItemProps {
@@ -11,8 +11,17 @@ interface SaleItemProps {
 }
 
 export const SaleItem: React.FC<SaleItemProps> = ({ sale, expanded, onExpand, onEdit, onDelete }) => {
+  const getStatusStyles = (status?: string) => {
+    switch (status) {
+      case 'Paid': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+      case 'Pending': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+      case 'Refunded': return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+    }
+  };
+
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[28px] border border-gray-100 dark:border-slate-800 shadow-sm transition-all overflow-hidden transition-colors">
+    <div className="bg-white dark:bg-slate-900 rounded-[28px] border border-gray-100 dark:border-slate-800 shadow-sm transition-all overflow-hidden">
       <div 
         onClick={onExpand}
         className="p-5 flex justify-between items-center active:bg-gray-50 dark:active:bg-slate-800 transition-colors cursor-pointer"
@@ -22,10 +31,16 @@ export const SaleItem: React.FC<SaleItemProps> = ({ sale, expanded, onExpand, on
             <DollarSign size={20}/>
           </div>
           <div>
-            <h4 className="font-bold text-sm text-gray-900 dark:text-white">{sale.customer}</h4>
+            <h4 className="font-bold text-sm text-gray-900 dark:text-white truncate max-w-[150px]">
+              {sale.productName || 'Product'}
+            </h4>
             <div className="flex items-center space-x-1.5 mt-0.5">
-              <Tag size={10} className="text-indigo-400 dark:text-indigo-500" />
-              <p className="text-[11px] text-gray-500 dark:text-slate-400 font-bold">{sale.productName || 'General Sale'}</p>
+              <span className={`text-[9px] px-1.5 py-0.5 rounded font-black uppercase tracking-tighter ${getStatusStyles(sale.status)}`}>
+                {sale.status || 'Paid'}
+              </span>
+              <p className="text-[11px] text-gray-500 dark:text-slate-400 font-bold truncate max-w-[100px]">
+                {sale.variantName ? `Variant: ${sale.variantName}` : 'Standard'}
+              </p>
             </div>
           </div>
         </div>

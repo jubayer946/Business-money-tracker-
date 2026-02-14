@@ -1,62 +1,141 @@
 
+import type { LucideIcon } from 'lucide-react';
+
+// ==================== ENUMS & STATUS TYPES ====================
+
 export type StockStatus = 'In Stock' | 'Low Stock' | 'Out of Stock';
 
+export type SaleStatus = 'Paid' | 'Pending' | 'Refunded';
+
+export type AdStatus = 'Active' | 'Paused' | 'Ended';
+
+export type ExpenseCategory = | 'advertising' | 'marketing' | 'supplies' | 'shipping' | 'software' | 'other';
+
+// ==================== PRODUCT TYPES ====================
+
 export interface ProductVariant {
-  id: string;        // e.g. "round", "oval"
-  name: string;      // e.g. "Round", "Oval"
-  stock: number;     // how many of this shape
-  buyPrice?: number; // optional – cost price for this shape
-  sellPrice?: number;// optional – sell price for this shape
+  id: string;
+  name: string;
+  stock: number;
 }
 
 export interface Product {
   id: string;
   name: string;
-  price: number;        // main selling price
-  costPrice?: number;   // main buying price
-  stock: number;        // total stock (sum of all variants, or simple stock if no variants)
+  price: number;
+  costPrice?: number;
+  stock: number;
   status: StockStatus;
   hasVariants?: boolean;
   variants?: ProductVariant[];
+  dateAdded?: string;
+}
+
+// ==================== SALE TYPES ====================
+
+export interface SaleItemDetail {
+  productId?: string;
+  productName: string;
+  variantId?: string;
+  variantName?: string;
+  quantity: number;
+  pricePerItem: number;
 }
 
 export interface Sale {
   id: string;
   date: string;
   amount: number;
-  customer: string;
-  productName: string; // Added to track which product was sold
+  productId?: string;
+  productName: string;
+  variantId?: string;
+  variantName?: string;
   items: number;
+  itemsDetail?: SaleItemDetail[];
+  status?: SaleStatus;
 }
+
+// ==================== EXPENSE TYPES ====================
+
+export interface Expense {
+  id: string;
+  name: string;
+  platform: string;
+  amount: number;
+  date: string;
+  endDate?: string;
+  productIds?: string[];
+  productNames?: string[];
+  category: ExpenseCategory;
+  notes?: string;
+  isRecurring?: boolean;
+  recurringInterval?: 'daily' | 'weekly' | 'monthly';
+}
+
+/** @deprecated Use Expense instead */
+export interface AdCampaign extends Expense {
+  status: AdStatus;
+  clicks?: number;
+  impressions?: number;
+}
+
+// Keeping AdCost for internal legacy logic
+export interface AdCost {
+  id: string;
+  platform: string; 
+  amount: number;
+  date: string;
+  endDate?: string;
+  notes?: string;
+}
+
+// ==================== AD PLATFORM TYPES ====================
 
 export interface AdPlatform {
   id: string;
   name: string;
+  order: number;
 }
 
-export interface AdCost {
+// ==================== AUDIT TYPES ====================
+
+export interface AuditLogEntry {
   id: string;
-  platform: string; // e.g. "Google Ads", "Facebook", "Instagram"
-  amount: number;
-  date: string;     // Represents start date
-  endDate?: string; // Optional end date for range-based expenses
-  notes?: string;
+  timestamp: string;
+  action: 'create' | 'update' | 'delete';
+  collection: 'products' | 'sales' | 'expenses' | 'platforms';
+  documentId: string;
+  documentName: string;
+  changes?: Record<string, { from: any; to: any }>;
+  userId?: string;
 }
 
-// Added Customer interface to fix import error in CustomersView.tsx
-export interface Customer {
-  id: string;
-  name: string;
-  email: string;
-  totalSpent: number;
-}
+// ==================== BUSINESS STATS ====================
 
 export interface BusinessStats {
   totalRevenue: number;
   totalOrders: number;
   totalAdSpend: number;
   inventoryValue: number;
+  netProfit: number;
 }
 
-// Updated ViewType to include 'customers'
-export type ViewType = 'dashboard' | 'inventory' | 'sales' | 'adCosts' | 'customers';
+export type ViewType = 'dashboard' | 'inventory' | 'sales' | 'ads';
+
+// ==================== COMPONENT PROP TYPES ====================
+
+export interface StatCardProps {
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
+  color: string;
+  trend?: number;
+  trendLabel?: string;
+}
+
+export interface NavItemProps {
+  icon: LucideIcon;
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}
