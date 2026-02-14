@@ -1,7 +1,13 @@
-/* index.css - Simple version without Tailwind directives */
+/* index.css */
 :root {
   --safe-top: env(safe-area-inset-top);
   --safe-bottom: env(safe-area-inset-bottom);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
@@ -10,6 +16,7 @@ body {
   overscroll-behavior-y: none;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
