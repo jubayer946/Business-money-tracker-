@@ -6,9 +6,6 @@ export default defineConfig({
   build: {
     target: 'esnext'
   },
-  css: {
-    postcss: './postcss.config.js',
-  },
   server: {
     host: true,
     port: 3000
