@@ -1,24 +1,23 @@
 
-import React from 'react';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorBoundaryProps {
-  // Children and fallback are optional to provide flexibility in usage
-  children?: React.ReactNode;
-  fallback?: React.ReactNode;
+  children?: ReactNode;
+  fallback?: ReactNode;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
-  errorInfo: React.ErrorInfo | null;
+  errorInfo: ErrorInfo | null;
 }
 
 /**
  * ErrorBoundary catches errors in its child component tree.
  */
-// Fix: Extending React.Component explicitly ensures that inherited members like setState and props are correctly recognized by TypeScript.
-export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+// Explicitly extending Component ensures that inherited members like setState, state, and props are correctly recognized.
+export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { 
     hasError: false, 
     error: null, 
@@ -35,9 +34,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   /**
    * Log error information and update state with component stack details.
    */
-  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    // Fix: Accessing setState inherited from React.Component base class.
+    // Accessing setState from the Component base class.
     this.setState({ errorInfo });
   }
 
@@ -45,12 +44,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
    * Reset the error state, allowing the user to attempt a reload.
    */
   private handleRetry = () => {
-    // Fix: Accessing setState inherited from React.Component base class to clear error state.
+    // Accessing setState from the Component base class.
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   public render() {
-    // Fix: Accessing state and props inherited from React.Component base class for rendering logic.
+    // Accessing state and props from the Component base class.
     const { hasError, error, errorInfo } = this.state;
     const { children, fallback } = this.props;
 
