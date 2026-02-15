@@ -1,5 +1,5 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React, { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorBoundaryProps {
@@ -16,8 +16,8 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary catches errors in its child component tree.
  */
-// Explicitly extending Component ensures that inherited members like setState, state, and props are correctly recognized.
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+// Fix: Use React.Component explicitly to resolve issues with inherited member recognition in some environments.
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { 
     hasError: false, 
     error: null, 
@@ -36,7 +36,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
    */
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    // Accessing setState from the Component base class.
+    // Fix: Accessing setState from the React.Component base class.
     this.setState({ errorInfo });
   }
 
@@ -44,12 +44,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
    * Reset the error state, allowing the user to attempt a reload.
    */
   private handleRetry = () => {
-    // Accessing setState from the Component base class.
+    // Fix: Accessing setState from the React.Component base class.
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   public render() {
-    // Accessing state and props from the Component base class.
+    // Fix: Accessing state and props from the React.Component base class.
     const { hasError, error, errorInfo } = this.state;
     const { children, fallback } = this.props;
 

@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { Plus, Edit2, Trash2, Package, ShoppingCart, Receipt, Settings, History, Calendar } from 'lucide-react';
+import { Plus, Edit2, Trash2, Package, ShoppingCart, Receipt, Settings, History, Calendar, Clock } from 'lucide-react';
 import { AuditLogEntry } from '../types';
 import { formatRelativeDate, formatFullDateTime, formatDate } from '../utils/formatters';
 
@@ -95,9 +95,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                     <p className="text-xs text-slate-700 dark:text-slate-300">
                       <span className="font-bold">{getActionText(entry)}</span>
                     </p>
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-tighter whitespace-nowrap ml-2">
+                    <div className="flex items-center text-[9px] font-black text-slate-400 uppercase tracking-tighter ml-2 shrink-0">
+                      <Clock size={10} className="mr-1" />
                       {new Date(entry.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                    </div>
                   </div>
                   
                   {entry.action === 'update' && entry.changes && (
@@ -111,7 +112,7 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
                   )}
 
                   <div className="flex items-center space-x-2 mt-2">
-                    <span className="text-[9px] font-bold text-slate-400">
+                    <span className="text-[9px] font-bold text-slate-500 dark:text-slate-400">
                       {formatRelativeDate(entry.timestamp)}
                     </span>
                     <span className="text-slate-200 dark:text-slate-800">•</span>
