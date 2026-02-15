@@ -3,10 +3,9 @@
 @tailwind components;
 @tailwind utilities;
 
-/* index.css */
 :root {
-  --safe-top: env(safe-area-inset-top);
-  --safe-bottom: env(safe-area-inset-bottom);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 * {
@@ -16,12 +15,17 @@
 }
 
 body {
-  font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-font-smoothing: antialiased;
+  background-color: #FBFBFE;
+}
+
+.dark body {
+  background-color: #0F172A;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
@@ -33,6 +37,16 @@ body {
   scrollbar-width: none;
 }
 
+/* iOS Spring Animation */
+.ios-sheet-enter {
+  animation: iosSheetUp 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
+@keyframes iosSheetUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
 .view-enter {
   animation: fadeInScale 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
 }
@@ -40,10 +54,16 @@ body {
 @keyframes fadeInScale {
   from {
     opacity: 0;
-    transform: scale(0.98) translateY(10px);
+    transform: scale(0.98) translateY(8px);
   }
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
   }
+}
+
+/* Glassmorphism utility */
+.ios-blur {
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }

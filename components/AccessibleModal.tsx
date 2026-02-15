@@ -68,11 +68,10 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
       role="dialog" 
       aria-modal="true" 
       aria-labelledby="modal-title" 
-      aria-describedby={description ? "modal-description" : undefined}
-      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-[200] flex items-end justify-center p-0"
     >
       <div 
-        className="absolute inset-0 bg-slate-950/70 backdrop-blur-md animate-in fade-in duration-500" 
+        className="absolute inset-0 bg-black/40 backdrop-blur-[2px] animate-in fade-in duration-300" 
         onClick={onClose} 
         aria-hidden="true" 
       />
@@ -81,21 +80,22 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
         ref={modalRef}
         tabIndex={-1}
         onKeyDown={handleKeyDown}
-        className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-t-[40px] sm:rounded-[40px] shadow-2xl flex flex-col max-h-[92vh] overflow-hidden outline-none animate-in slide-in-from-bottom-full duration-500 ease-out"
+        className="relative w-full max-w-2xl bg-[#F2F2F7] dark:bg-[#1C1C1E] rounded-t-[2.5rem] shadow-2xl flex flex-col max-h-[94vh] overflow-hidden outline-none ios-sheet-enter"
       >
-        <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 z-10">
-          <div className="flex items-center space-x-4">
-            {headerIcon && (
-              <div className="shrink-0 scale-90">
-                {headerIcon}
-              </div>
-            )}
+        {/* iOS Grabber Handle */}
+        <div className="w-full flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full" />
+        </div>
+
+        <div className="px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            {headerIcon && <div className="scale-90 opacity-80">{headerIcon}</div>}
             <div>
-              <h2 id="modal-title" className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+              <h2 id="modal-title" className="text-xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {title}
               </h2>
               {description && (
-                <p id="modal-description" className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
                   {description}
                 </p>
               )}
@@ -103,15 +103,16 @@ export const AccessibleModal: React.FC<AccessibleModalProps> = ({
           </div>
           <button 
             onClick={onClose} 
-            aria-label="Close modal"
-            className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 active:scale-90 transition-transform"
+            className="w-8 h-8 rounded-full bg-slate-200/50 dark:bg-slate-800 flex items-center justify-center text-slate-500 active:scale-90 transition-transform"
           >
-            <X size={20} />
+            <X size={18} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto hide-scrollbar overscroll-contain">
-          {children}
+        <div className="flex-1 overflow-y-auto hide-scrollbar overscroll-contain px-6 pb-12">
+          <div className="bg-white dark:bg-[#2C2C2E] rounded-3xl p-1 shadow-sm border border-slate-100 dark:border-slate-800/50">
+            {children}
+          </div>
         </div>
       </div>
     </div>

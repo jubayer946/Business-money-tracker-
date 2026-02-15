@@ -1,3 +1,4 @@
+
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
@@ -15,7 +16,6 @@ interface ErrorBoundaryState {
 /**
  * ErrorBoundary catches errors in its child component tree.
  */
-// Fix: Use Component explicitly from react import to resolve issues with inherited member recognition in some environments.
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { 
     hasError: false, 
@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
    */
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    // Fix: Accessing setState from the Component base class.
+    // Explicitly call setState from this instance of Component
     this.setState({ errorInfo });
   }
 
@@ -43,12 +43,12 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
    * Reset the error state, allowing the user to attempt a reload.
    */
   private handleRetry = () => {
-    // Fix: Accessing setState from the Component base class.
+    // Explicitly call setState from this instance of Component
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
   public render() {
-    // Fix: Accessing state and props from the Component base class.
+    // Explicitly access state and props from this instance of Component
     const { hasError, error, errorInfo } = this.state;
     const { children, fallback } = this.props;
 
