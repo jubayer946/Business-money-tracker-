@@ -1,27 +1,28 @@
+
 import React from 'react';
 
 export const LoadingScreen: React.FC = () => {
   return (
     <div className="fixed inset-0 bg-[#FBFBFE] dark:bg-[#0F172A] z-[1000] flex flex-col items-center justify-center p-6 transition-colors duration-500">
       <div className="relative mb-8">
-        <div className="w-20 h-20 bg-indigo-600 rounded-[28px] flex items-center justify-center shadow-2xl shadow-indigo-500/20 animate-bounce">
-           <span className="text-white font-black text-2xl tracking-tighter">BM</span>
+        <div className="w-20 h-20 bg-slate-900 dark:bg-white rounded-[32px] flex items-center justify-center shadow-lg animate-in zoom-in duration-700">
+           <span className="text-white dark:text-slate-900 font-black text-2xl tracking-tighter">NB</span>
         </div>
-        <div className="absolute -inset-4 border-2 border-indigo-600/20 rounded-[40px] animate-ping" />
+        <div className="absolute -inset-2 border border-slate-200 dark:border-slate-800 rounded-[40px] animate-pulse" />
       </div>
       
-      <div className="text-center space-y-2">
-        <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">BizMaster</h2>
-        <div className="flex items-center space-x-1.5 justify-center">
-          <div className="w-1 h-1 bg-indigo-600 rounded-full animate-pulse" />
-          <div className="w-1 h-1 bg-indigo-600 rounded-full animate-pulse [animation-delay:0.2s]" />
-          <div className="w-1 h-1 bg-indigo-600 rounded-full animate-pulse [animation-delay:0.4s]" />
-        </div>
+      <div className="text-center space-y-1">
+        <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Nobabigor</h2>
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400 dark:text-slate-500">
+          Crafting Business Excellence
+        </p>
       </div>
       
-      <p className="absolute bottom-12 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 dark:text-slate-600">
-        Secure Cloud Sync
-      </p>
+      <div className="absolute bottom-16 flex space-x-1.5 justify-center">
+        <div className="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse" />
+        <div className="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse [animation-delay:0.2s]" />
+        <div className="w-1.5 h-1.5 bg-slate-200 dark:bg-slate-800 rounded-full animate-pulse [animation-delay:0.4s]" />
+      </div>
     </div>
   );
 };
