@@ -1,5 +1,5 @@
-
 import type { LucideIcon } from 'lucide-react';
+import { ExpenseCategoryId } from './config/expenseCategories';
 
 // ==================== ENUMS & STATUS TYPES ====================
 
@@ -9,7 +9,8 @@ export type SaleStatus = 'Paid' | 'Pending' | 'Refunded';
 
 export type AdStatus = 'Active' | 'Paused' | 'Ended';
 
-export type ExpenseCategory = | 'advertising' | 'marketing' | 'supplies' | 'shipping' | 'software' | 'other';
+// Changed to string to allow user-defined categories in the future
+export type ExpenseCategory = string; 
 
 // ==================== PRODUCT TYPES ====================
 
@@ -70,6 +71,7 @@ export interface Expense {
   notes?: string;
   isRecurring?: boolean;
   recurringInterval?: 'daily' | 'weekly' | 'monthly';
+  createdAt?: string;
 }
 
 /** @deprecated Use Expense instead */

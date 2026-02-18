@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { Package, ChevronDown, Check, Search, AlertCircle } from 'lucide-react';
 import { Product, Expense, ExpenseCategory } from '../types';
@@ -7,6 +6,8 @@ import { useAsyncAction } from '../hooks/useAsyncAction';
 import { SaveButton } from './SaveButton';
 import { AccessibleModal } from './AccessibleModal';
 import { DateRangePicker } from './DateRangePicker';
+import { CategorySelector } from './CategorySelector';
+import { getCategoryConfig } from '../config/expenseCategories';
 
 interface AddExpenseModalProps {
   isOpen: boolean;
@@ -16,15 +17,6 @@ interface AddExpenseModalProps {
   initialData?: Expense | null;
   onSave: (data: Omit<Expense, 'id'>) => Promise<void>;
 }
-
-const CATEGORIES: { value: ExpenseCategory; label: string; icon: string }[] = [
-  { value: 'advertising', label: 'Advertising', icon: '📢' },
-  { value: 'marketing', label: 'Marketing', icon: '📈' },
-  { value: 'supplies', label: 'Supplies', icon: '📦' },
-  { value: 'shipping', label: 'Shipping', icon: '🚚' },
-  { value: 'software', label: 'Software', icon: '💻' },
-  { value: 'other', label: 'Other', icon: '📋' },
-];
 
 export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
   isOpen,
@@ -37,7 +29,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
   const [name, setName] = useState('');
   const [amount, setAmount] = useState<number>(0);
   const [platform, setPlatform] = useState('');
-  const [category, setCategory] = useState<ExpenseCategory>('advertising');
+  const [category, setCategory] = useState<ExpenseCategory>('paid_ads');
   const [startDate, setStartDate] = useState(getLocalDateString());
   const [endDate, setEndDate] = useState('');
   const [isDateRange, setIsDateRange] = useState(false);
@@ -57,7 +49,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
         setName(initialData.name);
         setAmount(initialData.amount);
         setPlatform(initialData.platform);
-        setCategory(initialData.category || 'advertising');
+        setCategory(initialData.category || 'paid_ads');
         setStartDate(initialData.date);
         setEndDate(initialData.endDate || '');
         setIsDateRange(!!initialData.endDate);
@@ -73,7 +65,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
     setName('');
     setAmount(0);
     setPlatform('');
-    setCategory('advertising');
+    setCategory('paid_ads');
     setStartDate(getLocalDateString());
     setEndDate('');
     setIsDateRange(false);
@@ -122,7 +114,8 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
     }
     
     // Default name if none provided
-    const finalName = name.trim() || `${category.charAt(0).toUpperCase() + category.slice(1)} Expense`;
+    const config = getCategoryConfig(category);
+    const finalName = name.trim() || `${config.label} Expense`;
     
     const basePayload: any = {
       name: finalName,
@@ -184,29 +177,6 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
         )}
       </div>
 
-      <div className="px-6 py-3 border-b border-slate-100 dark:border-slate-800 shrink-0">
-        <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1" role="radiogroup" aria-label="Expense Category">
-          {CATEGORIES.map(cat => (
-            <button 
-              key={cat.value} 
-              onClick={() => setCategory(cat.value)} 
-              disabled={isSubmitting}
-              role="radio"
-              type="button"
-              aria-checked={category === cat.value}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                category === cat.value 
-                  ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-lg' 
-                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
-              }`}
-            >
-              <span aria-hidden="true">{cat.icon}</span>
-              <span>{cat.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       <div className="flex-1 overflow-y-auto hide-scrollbar">
         <div className="p-6 space-y-6">
           {(error || saveError) && (
@@ -216,6 +186,18 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
             </div>
           )}
 
+          <div className="space-y-3">
+            <label className="text-xs font-bold text-slate-400 mb-3 block uppercase tracking-wider">
+              Category
+            </label>
+            <CategorySelector 
+              value={category} 
+              onChange={setCategory} 
+              showDescription={true} 
+              disabled={isSubmitting}
+            />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="exp-name" className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Campaign Name (Optional)</label>
@@ -224,7 +206,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                 type="text" 
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
-                placeholder="e.g. FB Ad Set A" 
+                placeholder="e.g. Summer Ad Set" 
                 disabled={isSubmitting}
                 className="w-full bg-slate-50 dark:bg-slate-800 rounded-2xl py-3 px-4 text-sm font-bold dark:text-white outline-none focus:ring-2 focus:ring-slate-900" 
               />
@@ -242,6 +224,9 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                 {platforms.map(p => (
                   <option key={p.id} value={p.name}>{p.name}</option>
                 ))}
+                {!platforms.some(p => p.name === 'Facebook Ads') && <option value="Facebook Ads">Facebook Ads</option>}
+                <option value="Google Ads">Google Ads</option>
+                <option value="TikTok Ads">TikTok Ads</option>
                 <option value="Other">Other</option>
               </select>
             </div>

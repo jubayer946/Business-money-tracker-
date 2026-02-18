@@ -1,9 +1,9 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './contexts/ToastContext';
+import { CategoryProvider } from './contexts/CategoryContext';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -16,7 +16,9 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary>
       <ToastProvider>
-        <App />
+        <CategoryProvider>
+          <App />
+        </CategoryProvider>
       </ToastProvider>
     </ErrorBoundary>
   </React.StrictMode>

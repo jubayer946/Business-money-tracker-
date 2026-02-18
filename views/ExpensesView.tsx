@@ -1,7 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Receipt, Filter, Plus, Upload, ChevronDown, Package } from 'lucide-react';
+import { Receipt, Filter, Plus, Upload, ChevronDown, Package, Edit2, Settings } from 'lucide-react';
 import { MobileHeader } from '../components/MobileHeader';
 import { CSVImport } from '../components/CSVImport';
+import { CategorySelector } from '../components/CategorySelector';
+import { CategoryManager, getCategoryConfig } from '../components/CategoryManager';
+import { AccessibleModal } from '../components/AccessibleModal';
 import { Expense, Product, AdPlatform } from '../types';
 import { formatCurrency, getDaysAgo, getLocalDateString } from '../utils';
 
@@ -42,6 +45,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
   const [productFilter, setProductFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const handleCSVImport = async (newExpenses: Omit<Expense, 'id'>[]) => {
@@ -74,10 +78,6 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
   const total = useMemo(() => 
     filteredExpenses.reduce((sum, e) => sum + e.amount, 0), 
   [filteredExpenses]);
-
-  const categories = useMemo(() => 
-    Array.from(new Set(expenses.map(e => e.category))),
-  [expenses]);
 
   const productsWithExpenses = useMemo(() => {
     const ids = new Set<string>();
@@ -142,7 +142,19 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
               </button>
             ))}
           </div>
-          <button onClick={() => setShowFilters(!showFilters)} className={`p-2.5 rounded-2xl transition-all ${showFilters ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-400 border border-slate-100 dark:border-slate-800'}`}>
+
+          <button 
+            onClick={() => setShowCategoryManager(true)} 
+            className="p-2.5 rounded-2xl bg-white dark:bg-slate-900 text-slate-400 border border-slate-100 dark:border-slate-800 transition-all hover:text-purple-600 active:scale-90" 
+            title="Manage Categories"
+          >
+            <Settings size={18} />
+          </button>
+
+          <button 
+            onClick={() => setShowFilters(!showFilters)} 
+            className={`p-2.5 rounded-2xl transition-all active:scale-90 ${showFilters ? 'bg-indigo-600 text-white' : 'bg-white dark:bg-slate-900 text-slate-400 border border-slate-100 dark:border-slate-800'}`}
+          >
             <Filter size={18} />
           </button>
         </div>
@@ -156,15 +168,12 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[9px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest">Category</label>
-                <select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl py-2 px-3 text-[10px] font-bold outline-none border-none">
-                  <option value="all">All</option>
-                  {categories.map(cat => ( <option key={cat} value={cat}>{cat.toUpperCase()}</option> ))}
-                </select>
+                <CategorySelector value={categoryFilter} onChange={setCategoryFilter} compact={true} />
               </div>
               <div>
                 <label className="text-[9px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest">Linked Product</label>
                 <select value={productFilter} onChange={(e) => setProductFilter(e.target.value)} className="w-full bg-slate-50 dark:bg-slate-800 rounded-xl py-2 px-3 text-[10px] font-bold outline-none border-none">
-                  <option value="all">All</option>
+                  <option value="all">All Products</option>
                   {productsWithExpenses.map(p => ( <option key={p.id} value={p.id}>{p.name}</option> ))}
                 </select>
               </div>
@@ -194,22 +203,48 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
           platforms={platforms}
         />
       )}
+
+      {/* Category Manager Modal */}
+      {showCategoryManager && (
+        <div className="fixed inset-0 bg-black/50 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-t-[32px] sm:rounded-[32px] w-full sm:max-w-md max-h-[90vh] flex flex-col shadow-2xl animate-in slide-in-from-bottom-full duration-300">
+            {/* Header */}
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex-shrink-0">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">
+                  Manage Categories
+                </h2>
+                <button 
+                  onClick={() => setShowCategoryManager(false)} 
+                  className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 text-2xl transition-colors"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+            {/* Content */}
+            <div className="p-6 overflow-y-auto flex-1 hide-scrollbar">
+              <CategoryManager onClose={() => setShowCategoryManager(false)} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 const ExpenseCard: React.FC<{ expense: Expense; isExpanded: boolean; onToggle: () => void; onEdit: () => void; onDelete: () => void; }> = ({ expense, isExpanded, onToggle, onEdit, onDelete }) => {
-  const categoryIcons: Record<string, string> = { advertising: '📢', marketing: '📈', supplies: '📦', shipping: '🚚', software: '💻', other: '📋' };
+  const config = getCategoryConfig(expense.category);
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-[28px] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm transition-all">
+    <div className={`bg-white dark:bg-slate-900 rounded-[28px] border transition-all ${isExpanded ? 'border-indigo-500 shadow-md' : 'border-slate-100 dark:border-slate-800 shadow-sm'}`}>
       <button onClick={onToggle} className="w-full p-4 flex items-center gap-4 text-left">
-        <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-[18px] flex items-center justify-center text-xl shadow-inner">
-          {categoryIcons[expense.category] || '📋'}
+        <div className={`w-12 h-12 ${config.color} rounded-[18px] flex items-center justify-center text-xl shadow-inner`}>
+          {config.icon}
         </div>
         <div className="flex-1 min-w-0">
           <p className="font-bold text-sm text-slate-900 dark:text-white truncate"> {expense.name} </p>
@@ -232,6 +267,13 @@ const ExpenseCard: React.FC<{ expense: Expense; isExpanded: boolean; onToggle: (
 
       {isExpanded && (
         <div className="px-5 pb-5 pt-2 border-t border-slate-50 dark:border-slate-800 animate-in fade-in slide-in-from-top-2">
+          {/* Category Badge */}
+          <div className="mb-3 mt-1">
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 ${config.color} rounded-xl text-[10px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 shadow-sm`}>
+              {config.icon} {config.label}
+            </span>
+          </div>
+
           {expense.productNames && expense.productNames.length > 0 && (
             <div className="py-3">
               <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2">Linked Inventory</p>

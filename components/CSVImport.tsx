@@ -1,7 +1,8 @@
 import React, { useState, useRef, useMemo } from 'react';
-import { Upload, AlertCircle, CheckCircle, X, Loader2, FileText, Check, Package, ChevronDown, Search } from 'lucide-react';
+import { Upload, AlertCircle, CheckCircle, X, Loader2, FileText, Check, Package, ChevronDown, Search, LayoutGrid } from 'lucide-react';
 import { Expense, Product, AdPlatform } from '../types';
 import { formatCurrency } from '../utils';
+import { CategorySelector } from './CategorySelector';
 
 interface CSVImportProps {
   onImport: (expenses: Expense[]) => Promise<void>;
@@ -19,6 +20,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
   
   // Batch settings
   const [batchPlatform, setBatchPlatform] = useState('Facebook Ads');
+  const [batchCategory, setBatchCategory] = useState('paid_ads');
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [productSearch, setProductSearch] = useState('');
@@ -192,7 +194,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
         name: `Facebook Ads - ${dateStr}`,
         amount: amount,
         date: date,
-        category: 'advertising',
+        category: 'paid_ads',
         platform: 'Facebook Ads',
         productIds: [],
         productNames: [],
@@ -207,7 +209,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
         name: `Facebook Ads VAT${vatRate ? ` (${vatRate}%)` : ''}`,
         amount: vatAmount,
         date: vatDate,
-        category: 'advertising',
+        category: 'paid_ads',
         platform: 'Facebook Ads',
         productIds: [],
         productNames: [],
@@ -234,6 +236,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
       const finalizedExpenses = preview.map(exp => ({
         ...exp,
         platform: batchPlatform,
+        category: batchCategory,
         productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined,
         productNames: productNames.length > 0 ? productNames : undefined,
       }));
@@ -314,7 +317,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
             </div>
           )}
 
-          {/* File Selected */}
+          {/* File Selected Preview */}
           {file && !error && preview.length === 0 && (
             <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-4 flex items-center gap-3">
               <FileText size={24} className="text-indigo-600" />
@@ -361,21 +364,9 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
           {/* Success Preview & Import Options */}
           {preview.length > 0 && (
             <div className="space-y-6">
-              {/* Quick Import at Top */}
-              <div className="sticky top-0 z-10 bg-white dark:bg-slate-900 pb-3">
-                <button
-                  onClick={handleImport}
-                  disabled={isImporting}
-                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg"
-                >
-                  {isImporting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
-                  Import {preview.length} Expenses Now
-                </button>
-              </div>
-
               {/* Import Options Section */}
               <div className="bg-slate-50 dark:bg-slate-800/50 rounded-[28px] p-5 space-y-5 border border-slate-100 dark:border-slate-800">
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Import Settings</h3>
+                <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Batch Settings</h3>
                 
                 {/* Platform Selector */}
                 <div className="space-y-2">
@@ -383,7 +374,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
                   <select
                     value={batchPlatform}
                     onChange={(e) => setBatchPlatform(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl py-2.5 px-3 text-xs font-bold outline-none focus:ring-2 focus:ring-indigo-500 appearance-none"
                   >
                     {platforms.map(p => (
                       <option key={p.id} value={p.name}>{p.name}</option>
@@ -391,6 +382,16 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
                     {!platforms.some(p => p.name === 'Facebook Ads') && <option value="Facebook Ads">Facebook Ads</option>}
                     <option value="Other">Other</option>
                   </select>
+                </div>
+
+                {/* Category Selector */}
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black uppercase text-slate-400">Expense Category</label>
+                  <CategorySelector 
+                    value={batchCategory} 
+                    onChange={setBatchCategory} 
+                    compact={true} 
+                  />
                 </div>
 
                 {/* Link to Products */}
@@ -408,7 +409,7 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
                           {selectedProductIds.length} Products Linked
                         </span>
                       ) : (
-                        <span className="text-[11px] text-slate-400 font-bold">Select products to link...</span>
+                        <span className="text-[11px] text-slate-400 font-bold">Optional: Select products...</span>
                       )}
                     </div>
                     <ChevronDown size={14} className={`text-slate-400 transition-transform ${showProductPicker ? 'rotate-180' : ''}`} />
@@ -450,138 +451,57 @@ export const CSVImport: React.FC<CSVImportProps> = ({ onImport, onClose, product
                 </div>
               </div>
 
+              {/* Ready to Import Summary */}
               <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4 flex items-center gap-3">
                 <CheckCircle size={20} className="text-emerald-600" />
                 <div className="flex-1">
-                  <p className="text-xs font-bold text-emerald-600">
-                    Ready to Import
-                  </p>
+                  <p className="text-xs font-bold text-emerald-600">Ready to Import</p>
                   <p className="text-xs text-emerald-500 mt-1">
-                    {preview.filter(e => !e.name.includes('VAT')).length} transactions + {preview.filter(e => e.name.includes('VAT')).length > 0 ? ' VAT' : ''} • {formatCurrency(preview.reduce((sum, e) => sum + e.amount, 0))} total
+                    {preview.length} transactions • {formatCurrency(preview.reduce((sum, e) => sum + e.amount, 0))} total
                   </p>
                 </div>
               </div>
 
-              {/* Preview List with VAT Badge */}
+              {/* Preview List */}
               <div className="max-h-48 overflow-y-auto space-y-2 bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3 hide-scrollbar">
-                {preview.map((expense, i) => {
-                  const isVAT = expense.name.includes('VAT');
-                  return (
-                    <div
-                      key={i}
-                      className={`bg-white dark:bg-slate-900 rounded-xl p-3 flex justify-between items-center ${
-                        isVAT ? 'border-2 border-amber-200 dark:border-amber-800' : ''
-                      }`}
-                    >
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <p
-                            className={`font-bold text-xs truncate ${
-                              isVAT ? 'text-amber-700 dark:text-amber-400' : 'text-slate-900 dark:text-white'
-                            }`}
-                          >
-                            {expense.name}
-                          </p>
-                          {isVAT && (
-                            <span className="px-2 py-0.5 bg-amber-500 text-white text-[8px] font-black uppercase rounded-full">
-                              VAT
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[10px] text-slate-400 mt-0.5">
-                          {expense.date}
-                        </p>
-                      </div>
-                      <p className={`font-black text-sm ${isVAT ? 'text-amber-600' : 'text-red-500'}`}>
-                        {formatCurrency(expense.amount)}
-                      </p>
+                {preview.map((expense, i) => (
+                  <div key={i} className="bg-white dark:bg-slate-900 rounded-xl p-3 flex justify-between items-center shadow-sm">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-bold text-xs text-slate-900 dark:text-white truncate">{expense.name}</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">{expense.date}</p>
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Breakdown Summary */}
-              <div className="bg-slate-100 dark:bg-slate-800 rounded-xl p-3 space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="text-slate-600 dark:text-slate-400">Transactions</span>
-                  <span className="font-bold text-slate-900 dark:text-white">
-                    {formatCurrency(
-                      preview
-                        .filter(e => !e.name.includes('VAT'))
-                        .reduce((sum, e) => sum + e.amount, 0)
-                    )}
-                  </span>
-                </div>
-                {preview.filter(e => e.name.includes('VAT')).length > 0 && (
-                  <div className="flex justify-between items-center text-xs">
-                    <span className="text-amber-600 dark:text-amber-400">VAT</span>
-                    <span className="font-bold text-amber-700 dark:text-amber-400">
-                      {formatCurrency(
-                        preview
-                          .filter(e => e.name.includes('VAT'))
-                          .reduce((sum, e) => sum + e.amount, 0)
-                      )}
-                    </span>
+                    <p className="font-black text-xs text-red-500">-{formatCurrency(expense.amount)}</p>
                   </div>
-                )}
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    Total
-                  </span>
-                  <span className="font-black text-lg text-slate-900 dark:text-white">
-                    {formatCurrency(preview.reduce((sum, e) => sum + e.amount, 0))}
-                  </span>
-                </div>
+                ))}
               </div>
             </div>
           )}
 
-          {/* Format Guide */}
+          {/* Help Guide */}
           {!preview.length && (
-            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 space-y-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
-                  ✅ Accepts Facebook Billing Reports
-                </p>
-                <div className="bg-white dark:bg-slate-900 rounded-xl p-3 font-mono text-[9px] overflow-x-auto">
-                  <div className="text-slate-600 dark:text-slate-400 whitespace-nowrap">
-                    Date,Transaction ID,Amount,Currency
-                  </div>
-                  <div className="text-slate-400 dark:text-slate-500 whitespace-nowrap mt-1">
-                    2/15/2026,25600692526282339,286.79,BDT
-                  </div>
-                  <div className="text-slate-400 dark:text-slate-500 whitespace-nowrap">
-                    2/8/2026,25546868341664754,638.96,BDT
-                  </div>
-                </div>
-              </div>
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-3 border border-indigo-200 dark:border-indigo-800">
-                <p className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 mb-2 uppercase tracking-wider">
-                  📋 How to Export from Facebook
-                </p>
-                <ol className="text-[9px] text-slate-600 dark:text-slate-400 space-y-1 leading-relaxed">
-                  <li>1. Go to <span className="font-bold">Ads Manager</span> → <span className="font-bold">Billing</span></li>
-                  <li>2. Click <span className="font-bold">Transactions</span> tab</li>
-                  <li>3. Select date range</li>
-                  <li>4. Click <span className="font-bold">Download</span></li>
-                  <li>5. Upload that file here!</li>
-                </ol>
-              </div>
+            <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl p-4 space-y-3">
+               <p className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">📋 How to export from Facebook</p>
+               <ol className="text-[9px] text-slate-600 dark:text-slate-400 space-y-1">
+                 <li>1. Open <span className="font-bold">Ads Manager</span></li>
+                 <li>2. Go to <span className="font-bold">Billing & Payments</span></li>
+                 <li>3. Click <span className="font-bold">Transactions</span></li>
+                 <li>4. Select date range & click <span className="font-bold">Download</span> (CSV)</li>
+               </ol>
             </div>
           )}
         </div>
 
-        {/* Footer - Fixed at Bottom with Import Button */}
+        {/* Footer */}
         {preview.length > 0 && (
           <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex-shrink-0 bg-white dark:bg-slate-900">
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 onClick={() => {
                   setFile(null);
                   setPreview([]);
                   setError(null);
                 }}
-                className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm uppercase tracking-wider active:scale-95 transition-all"
+                className="flex-1 py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-2xl font-black text-sm uppercase tracking-wider"
               >
                 Cancel
               </button>
