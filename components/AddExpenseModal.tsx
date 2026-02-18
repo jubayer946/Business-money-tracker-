@@ -116,13 +116,16 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
   };
 
   const handleSave = async () => {
-    if (!name.trim() || amount <= 0) {
-      setError('Please provide a name and amount');
+    if (amount <= 0) {
+      setError('Please provide a valid amount');
       return;
     }
     
+    // Default name if none provided
+    const finalName = name.trim() || `${category.charAt(0).toUpperCase() + category.slice(1)} Expense`;
+    
     const basePayload: any = {
-      name: name.trim(),
+      name: finalName,
       platform: platform || 'General',
       amount: Number(amount),
       date: startDate,
@@ -215,7 +218,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor="exp-name" className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Campaign Name</label>
+              <label htmlFor="exp-name" className="block text-[10px] font-black uppercase tracking-widest text-slate-400">Campaign Name (Optional)</label>
               <input 
                 id="exp-name"
                 type="text" 
@@ -326,7 +329,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
       </div>
 
       <div className="p-6 border-t border-slate-100 dark:border-slate-800 shrink-0">
-        <SaveButton onClick={handleSave} isLoading={isSubmitting} disabled={!name.trim() || amount <= 0}>
+        <SaveButton onClick={handleSave} isLoading={isSubmitting} disabled={amount <= 0}>
           Confirm Expense — ${amount.toFixed(2)}
         </SaveButton>
       </div>

@@ -21,15 +21,15 @@ type ThemeMode = 'light' | 'dark' | 'auto';
 type PeriodType = 'today' | '7d' | '30d';
 
 const T = {
-  dashboard: 'Dashboard',
+  dashboard: 'Nobabighor',
   revenue: 'Revenue',
   orders: 'Orders',
   netProfit: 'Net Profit',
   margin: 'Margin',
   roas: 'ROAS',
-  criticalAlerts: 'Low Stock Alerts',
-  salesTrend: 'Sales Overview',
-  allHealthy: 'All stock levels healthy ✨',
+  criticalAlerts: 'Low Stock',
+  salesTrend: 'Sales Trend',
+  allHealthy: 'Inventory healthy ✨',
   today: 'D',
   sevenDays: 'W',
   thirtyDays: 'M'
@@ -52,7 +52,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   products, 
   sales, 
   expenses,
-  auditLogs,
   theme,
   setTheme,
   onAlertClick,
@@ -182,8 +181,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 onClick={() => setSelectedPeriod(period)}
                 className={`w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-black transition-all duration-300 transform ${
                   isActive 
-                    ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/40 scale-125 z-10' 
-                    : 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-400 border border-slate-100 dark:border-slate-800 hover:scale-105 hover:text-slate-600'
+                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md scale-125 z-10' 
+                    : 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-400 border border-slate-100 dark:border-slate-800'
                 }`}
               >
                 {label}
@@ -196,7 +195,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       <div className="max-w-5xl mx-auto space-y-5 mt-4">
         <div className="px-4 flex overflow-x-auto space-x-3 hide-scrollbar pt-2 pr-16">
           <StatCard label={T.revenue} value={formatCurrency(periodStats.revenue)} icon={TrendingUp} color="bg-emerald-500" />
-          <StatCard label={T.netProfit} value={formatCurrency(periodStats.netProfit)} icon={DollarSign} color="bg-indigo-500" />
+          <StatCard label={T.netProfit} value={formatCurrency(periodStats.netProfit)} icon={DollarSign} color="bg-slate-900 dark:bg-indigo-600" />
           <StatCard label={T.orders} value={periodStats.orders} icon={ShoppingCart} color="bg-orange-500" />
         </div>
 
@@ -209,13 +208,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
            <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm transition-all duration-500">
               <div className="flex items-center justify-between mb-6">
                  <div className="flex flex-col">
-                   <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{T.salesTrend}</h3>
-                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
-                    {selectedPeriod === 'today' ? 'Hourly Performance' : selectedPeriod === '7d' ? 'Last 7 Days' : 'Last 30 Days'}
+                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{T.salesTrend}</h3>
+                   <span className="text-xs text-slate-900 dark:text-white font-bold mt-0.5">
+                    {selectedPeriod === 'today' ? 'Hourly View' : selectedPeriod === '7d' ? 'Last Week' : 'Last 30 Days'}
                    </span>
                  </div>
-                 <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                    <BarChart3 size={18} />
+                 <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                    <BarChart3 size={16} />
                  </div>
               </div>
               
@@ -223,11 +222,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                  {salesTrend.data.map((d, i) => (
                    <div key={i} className="flex flex-col items-center flex-1 group relative">
                       <div 
-                        className={`w-full bg-indigo-500/90 dark:bg-indigo-600 rounded-t-lg transition-all duration-1000 ease-out relative overflow-hidden`} 
+                        className={`w-full bg-slate-900/90 dark:bg-white rounded-t-lg transition-all duration-1000 ease-out relative`} 
                         style={{ height: `${(d.revenue / salesTrend.max) * 100}%` }} 
                       >
-                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-900 dark:bg-slate-800 text-white text-[9px] py-1.5 px-2 rounded-xl pointer-events-none transition-opacity whitespace-nowrap z-20 shadow-xl border border-white/10">
+                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[9px] py-1.5 px-2 rounded-xl pointer-events-none transition-opacity whitespace-nowrap z-20 shadow-xl border border-white/10 dark:border-slate-200">
                           {formatCurrency(d.revenue)}
                         </div>
                       </div>
@@ -250,15 +248,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <AlertCircle size={18} className="text-red-500" />
                   <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{T.criticalAlerts}</h3>
                 </div>
-                <span className="text-[10px] font-black bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-2.5 py-1 rounded-full uppercase">
-                  Action Required
-                </span>
               </div>
               <div className="space-y-3">
                 {alertProducts.slice(0, 3).map((p) => (
                   <button key={p.id} onClick={() => onAlertClick(p.id)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl active:bg-slate-100 dark:active:bg-slate-800 transition-all border border-transparent active:border-slate-200">
                     <div className="flex items-center space-x-4 overflow-hidden">
-                      <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${getProductStock(p) === 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
+                      <div className={`w-2 h-2 rounded-full shrink-0 ${getProductStock(p) === 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
                       <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{p.name}</p>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -269,9 +264,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 ))}
                 {alertProducts.length === 0 && (
                   <div className="text-center py-6">
-                    <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <TrendingUp size={20} className="text-emerald-500" />
-                    </div>
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{T.allHealthy}</p>
                   </div>
                 )}

@@ -23,7 +23,7 @@ type ThemeMode = 'light' | 'dark' | 'auto';
 type PeriodType = 'today' | '7d' | '30d';
 
 const T = {
-  dashboard: 'Nobabigor',
+  dashboard: 'Nobabighor',
   revenue: 'Revenue',
   orders: 'Orders',
   netProfit: 'Net Profit',

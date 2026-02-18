@@ -6,8 +6,8 @@ import {
   deleteDoc,
   doc,
   orderBy,
-  writeBatch,
   updateDoc,
+  writeBatch,
 } from 'firebase/firestore';
 import { db } from './firebase';
 
@@ -34,6 +34,7 @@ import { useRateLimitedMutation } from './hooks/useRateLimitedMutation';
 import { RateLimitIndicator } from './components/RateLimitIndicator';
 import { useAuditLog } from './hooks/useAuditLog';
 import { AccessibleModal } from './components/AccessibleModal';
+import { ActivityFeed } from './components/ActivityFeed';
 
 import {
   LayoutDashboard,
@@ -200,12 +201,10 @@ const App: React.FC = () => {
 
   const { mutate: saveSaleMutation } = useRateLimitedMutation(
     async (data: any) => {
-      const batch = writeBatch(db);
       const sanitizedQuantity = sanitizeNumber(data.quantity, { min: 1, decimals: 0 });
       const sanitizedPrice = sanitizeNumber(data.price, { min: 0 });
       const totalAmount = sanitizedQuantity * sanitizedPrice;
       
-      const saleRef = editingSale ? doc(db, 'sales', editingSale.id) : doc(collection(db, 'sales'));
       const saleData = cleanObject({
         productId: String(data.productId),
         variantId: data.variantId ? String(data.variantId) : null,
@@ -218,13 +217,13 @@ const App: React.FC = () => {
       });
 
       if (editingSale) {
-        batch.update(saleRef, saleData);
+        await updateDoc(doc(db, 'sales', editingSale.id), saleData);
         logUpdate('sales', editingSale.id, saleData.productName, { amount: { from: editingSale.amount, to: saleData.amount } });
       } else {
-        batch.set(saleRef, saleData);
-        logCreate('sales', saleRef.id, saleData.productName);
+        const docRef = await addDoc(collection(db, 'sales'), { ...saleData, createdAt: new Date().toISOString() });
+        logCreate('sales', docRef.id, saleData.productName);
       }
-      await batch.commit();
+      toast.success(editingSale ? 'Sale updated' : 'Sale recorded');
     }
   );
 
@@ -248,7 +247,32 @@ const App: React.FC = () => {
     }
   );
 
-  // Fix: Defined handleConfirmProductDelete handler
+  const handleBatchImportExpenses = async (newExpenses: Expense[]) => {
+    try {
+      // Chunk imports into batches of 400 to respect Firestore 500 limit
+      const CHUNK_SIZE = 400;
+      for (let i = 0; i < newExpenses.length; i += CHUNK_SIZE) {
+        const chunk = newExpenses.slice(i, i + CHUNK_SIZE);
+        const batch = writeBatch(db);
+        chunk.forEach(exp => {
+          const { id, ...data } = exp; // Extract id if provided by parser
+          const docRef = doc(collection(db, 'expenses'));
+          batch.set(docRef, { 
+            ...data, 
+            createdAt: new Date().toISOString() 
+          });
+        });
+        await batch.commit();
+      }
+      toast.success(`Successfully imported ${newExpenses.length} expenses`);
+      logCreate('expenses', 'batch-import', `${newExpenses.length} records`);
+    } catch (e) {
+      console.error('Batch import failed:', e);
+      toast.error('Import Failed', 'There was an error saving the imported expenses.');
+      throw e; 
+    }
+  };
+
   const handleConfirmProductDelete = async () => {
     const item = productDelete.confirmDelete();
     if (!item) return;
@@ -264,7 +288,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Fix: Defined handleConfirmSaleDelete handler
   const handleConfirmSaleDelete = async () => {
     const item = saleDelete.confirmDelete();
     if (!item) return;
@@ -280,7 +303,6 @@ const App: React.FC = () => {
     }
   };
 
-  // Fix: Defined handleConfirmExpenseDelete handler
   const handleConfirmExpenseDelete = async () => {
     const item = expenseDelete.confirmDelete();
     if (!item) return;
@@ -317,7 +339,7 @@ const App: React.FC = () => {
           {view === 'dashboard' && <DashboardView products={products} sales={sales} expenses={expenses} stats={globalStats} auditLogs={auditLogs || []} theme={theme} setTheme={setTheme} onAlertClick={id => { setView('inventory'); setExpandedProductId(id); }} onMigrate={async () => {}} onActivityClick={handleOpenActivity} />}
           {view === 'inventory' && <InventoryView products={products} sales={sales} adCosts={expenses} searchQuery={searchQuery} setSearchQuery={setSearchQuery} theme={theme} setTheme={setTheme} expandedProductId={expandedProductId} setExpandedProductId={setExpandedProductId} onEdit={p => { setEditingProduct(p); setIsAddProductModalOpen(true); }} onDelete={productDelete.requestDelete} onActivityClick={handleOpenActivity} />}
           {view === 'sales' && <SalesView sales={sales} searchQuery={searchQuery} setSearchQuery={setSearchQuery} theme={theme} setTheme={setTheme} onEdit={s => { setEditingSale(s); setIsAddSaleModalOpen(true); }} onDelete={saleDelete.requestDelete} onActivityClick={handleOpenActivity} />}
-          {view === 'ads' && <ExpensesView expenses={expenses} products={products} searchQuery={searchQuery} setSearchQuery={setSearchQuery} theme={theme} setTheme={setTheme} onAdd={() => { setEditingExpense(null); setIsAddExpenseModalOpen(true); }} onEdit={e => { setEditingExpense(e); setIsAddExpenseModalOpen(true); }} onDelete={expenseDelete.requestDelete} onActivityClick={handleOpenActivity} />}
+          {view === 'ads' && <ExpensesView expenses={expenses} products={products} platforms={platforms} searchQuery={searchQuery} setSearchQuery={setSearchQuery} theme={theme} setTheme={setTheme} onAdd={() => { setEditingExpense(null); setIsAddExpenseModalOpen(true); }} onEdit={e => { setEditingExpense(e); setIsAddExpenseModalOpen(true); }} onDelete={expenseDelete.requestDelete} onBatchImport={handleBatchImportExpenses} onActivityClick={handleOpenActivity} />}
         </div>
 
         {isAddMenuOpen && (
@@ -354,8 +376,8 @@ const App: React.FC = () => {
           title="Business Log"
           headerIcon={<History size={20} className="text-slate-500" />}
         >
-          <div className="p-2">
-            <InventoryView products={products} sales={sales} adCosts={expenses} searchQuery="" setSearchQuery={() => {}} theme={theme} setTheme={setTheme} expandedProductId={null} setExpandedProductId={() => {}} onEdit={() => {}} onDelete={() => {}} />
+          <div className="p-4">
+            <ActivityFeed entries={auditLogs || []} maxItems={50} />
           </div>
         </AccessibleModal>
 

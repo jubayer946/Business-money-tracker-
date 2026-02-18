@@ -1,8 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
-import { Receipt, Filter, Plus, TrendingDown, Package, Edit2, Trash2, ChevronDown, Calendar, Search } from 'lucide-react';
+import { Receipt, Filter, Plus, Upload, ChevronDown, Package } from 'lucide-react';
 import { MobileHeader } from '../components/MobileHeader';
-import { Expense, Product } from '../types';
+import { CSVImport } from '../components/CSVImport';
+import { Expense, Product, AdPlatform } from '../types';
 import { formatCurrency, getDaysAgo, getLocalDateString } from '../utils';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
@@ -11,6 +11,7 @@ type DateFilter = 'all' | 'today' | '7d' | '30d';
 interface ExpensesViewProps {
   expenses: Expense[];
   products: Product[];
+  platforms: AdPlatform[];
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   theme: ThemeMode;
@@ -18,12 +19,14 @@ interface ExpensesViewProps {
   onAdd: () => void;
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
+  onBatchImport?: (expenses: Omit<Expense, 'id'>[]) => Promise<void>;
   onActivityClick?: () => void;
 }
 
 export const ExpensesView: React.FC<ExpensesViewProps> = ({
   expenses,
   products,
+  platforms,
   searchQuery,
   setSearchQuery,
   theme,
@@ -31,13 +34,22 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
   onAdd,
   onEdit,
   onDelete,
+  onBatchImport,
   onActivityClick
 }) => {
   const [dateFilter, setDateFilter] = useState<DateFilter>('30d');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [productFilter, setProductFilter] = useState<string>('all');
   const [showFilters, setShowFilters] = useState(false);
+  const [showCSVImport, setShowCSVImport] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const handleCSVImport = async (newExpenses: Omit<Expense, 'id'>[]) => {
+    if (onBatchImport) {
+      await onBatchImport(newExpenses);
+      setShowCSVImport(false);
+    }
+  };
 
   const filteredExpenses = useMemo(() => {
     const today = getLocalDateString();
@@ -100,9 +112,22 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                 {filteredExpenses.length} Records Detected
               </p>
             </div>
-            <button onClick={onAdd} className="w-12 h-12 bg-slate-900 dark:bg-white rounded-[20px] flex items-center justify-center shadow-xl active:scale-90 transition-all">
-              <Plus size={24} className="text-white dark:text-slate-900" />
-            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setShowCSVImport(true)}
+                className="w-12 h-12 bg-indigo-600 rounded-[20px] flex items-center justify-center shadow-xl active:scale-90 transition-all"
+                title="Import CSV"
+              >
+                <Upload size={20} className="text-white" />
+              </button>
+              <button 
+                onClick={onAdd} 
+                className="w-12 h-12 bg-slate-900 dark:bg-white rounded-[20px] flex items-center justify-center shadow-xl active:scale-90 transition-all"
+                title="New Expense"
+              >
+                <Plus size={24} className="text-white dark:text-slate-900" />
+              </button>
+            </div>
           </div>
           <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-red-500 via-indigo-500 to-emerald-500 opacity-20" />
         </div>
@@ -160,6 +185,15 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
           )}
         </div>
       </div>
+
+      {showCSVImport && onBatchImport && (
+        <CSVImport
+          onImport={handleCSVImport}
+          onClose={() => setShowCSVImport(false)}
+          products={products}
+          platforms={platforms}
+        />
+      )}
     </div>
   );
 };

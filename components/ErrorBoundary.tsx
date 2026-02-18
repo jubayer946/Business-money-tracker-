@@ -1,22 +1,23 @@
 
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorBoundaryProps {
-  children?: ReactNode;
-  fallback?: ReactNode;
+  children?: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
+  errorInfo: React.ErrorInfo | null;
 }
 
 /**
  * ErrorBoundary catches errors in its child component tree.
  */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+// Fix: Explicitly use React.Component to ensure inherited properties like setState and props are recognized by TypeScript.
+export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
   public state: ErrorBoundaryState = { 
     hasError: false, 
     error: null, 
@@ -33,9 +34,9 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   /**
    * Log error information and update state with component stack details.
    */
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    // Explicitly call setState from this instance of Component
+    // Fix: Explicitly using inherited setState from React.Component.
     this.setState({ errorInfo });
   }
 
@@ -43,18 +44,17 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
    * Reset the error state, allowing the user to attempt a reload.
    */
   private handleRetry = () => {
-    // Explicitly call setState from this instance of Component
+    // Fix: Explicitly using inherited setState from React.Component.
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
-  public render() {
-    // Explicitly access state and props from this instance of Component
+  public render(): React.ReactNode {
+    // Fix: Correctly access this.state and this.props inherited from React.Component.
     const { hasError, error, errorInfo } = this.state;
     const { children, fallback } = this.props;
 
-    // Check if an error has been caught and render fallback if necessary.
+    // If an error was captured, render the fallback UI.
     if (hasError) {
-      // Check for a custom fallback UI provided via props.
       if (fallback) {
         return fallback as React.ReactElement;
       }
@@ -92,7 +92,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         </div>
       );
     }
-    // Return children from props when no error is caught.
-    return (children as React.ReactNode) || null;
+    // Return child components if no error occurred.
+    return children || null;
   }
 }

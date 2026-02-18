@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { MobileHeader } from '../components/MobileHeader';
 import { SaleItem } from '../components/SaleItem';
@@ -8,11 +7,9 @@ import {
   DollarSign, 
   ShoppingCart, 
   TrendingUp, 
-  Hash, 
   Download, 
   Check, 
-  LucideIcon,
-  ArrowUpDown 
+  LucideIcon
 } from 'lucide-react';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
@@ -80,15 +77,12 @@ export const SalesView: React.FC<SalesViewProps> = ({
     const thirtyDaysAgoStr = getLocalDateString(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000));
 
     return sales.filter((s) => {
-      // 1. Date Range Filter
       if (selectedRange === 'today' && s.date !== todayStr) return false;
       if (selectedRange === '7d' && s.date < sevenDaysAgoStr) return false;
       if (selectedRange === '30d' && s.date < thirtyDaysAgoStr) return false;
 
-      // 2. Status Filter
       if (selectedStatus !== 'All' && s.status !== selectedStatus) return false;
 
-      // 3. Text Search Filter
       if (!q) return true;
 
       const inProduct = s.productName?.toLowerCase().includes(q) ?? false;
@@ -120,15 +114,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
     if (filteredAndSortedSales.length === 0) return;
 
     try {
-      const headers = [
-        'Date', 
-        'Product', 
-        'Variant', 
-        'Units', 
-        'Amount ($)', 
-        'Status'
-      ];
-      
+      const headers = ['Date', 'Product', 'Variant', 'Units', 'Amount ($)', 'Status'];
       const rows = filteredAndSortedSales.map(s => [
         s.date,
         s.productName,
@@ -139,16 +125,18 @@ export const SalesView: React.FC<SalesViewProps> = ({
       ]);
 
       const csvContent = generateCSV(headers, rows);
-      const filename = generateFilename('bizmaster_sales');
+      const filename = generateFilename('nobabigor_sales');
       downloadCSV(filename, csvContent);
       
       setShowExportSuccess(true);
       setTimeout(() => setShowExportSuccess(false), 3000);
     } catch (error) {
       console.error('CSV export failed:', error);
-      alert('Failed to export CSV. Please try again.');
     }
   };
+
+  const statusOptions: (SaleStatus | 'All')[] = ['All', 'Paid', 'Pending', 'Refunded'];
+  const rangeOptions: DateRange[] = ['all', 'today', '7d', '30d'];
 
   return (
     <div className="pb-32 bg-slate-50 dark:bg-slate-950 min-h-screen transition-colors duration-300">
@@ -173,36 +161,57 @@ export const SalesView: React.FC<SalesViewProps> = ({
       )}
 
       <div className="px-5 mt-4 space-y-5">
-        <div className="space-y-3">
-          <div className="flex p-1 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
-            {(['all', 'today', '7d', '30d'] as DateRange[]).map((r) => (
-              <button
-                key={r}
-                onClick={() => setSelectedRange(r)}
-                className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  selectedRange === r
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 dark:shadow-none'
-                    : 'text-slate-400 dark:text-slate-500'
-                }`}
-              >
-                {T.ranges[r]}
-              </button>
-            ))}
+        <div className="space-y-4">
+          {/* Animated Indicator Date Range Filter */}
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl p-1 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+            <div className="flex relative">
+              <div 
+                className="absolute bottom-0 h-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-300 ease-out" 
+                style={{ 
+                  width: '25%', 
+                  left: `${rangeOptions.indexOf(selectedRange) * 25}%`,
+                }} 
+              />
+              {rangeOptions.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setSelectedRange(r)}
+                  className={`flex-1 py-3 text-[11px] font-black uppercase tracking-wider transition-all duration-200 ${
+                    selectedRange === r
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                  }`}
+                >
+                  {T.ranges[r]}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex p-1 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
-            {(['All', 'Paid', 'Pending', 'Refunded'] as (SaleStatus | 'All')[]).map((st) => (
-              <button
-                key={st}
-                onClick={() => setSelectedStatus(st)}
-                className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-tighter transition-all ${
-                  selectedStatus === st
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-400 dark:text-slate-500'
-                }`}
-              >
-                {st}
-              </button>
-            ))}
+
+          {/* Animated Indicator Status Filter */}
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl p-1 shadow-sm border border-slate-100 dark:border-slate-800 transition-colors">
+            <div className="flex relative">
+              <div 
+                className="absolute bottom-0 h-0.5 bg-gradient-to-r from-emerald-500 to-indigo-500 rounded-full transition-all duration-300 ease-out" 
+                style={{ 
+                  width: '25%', 
+                  left: `${statusOptions.indexOf(selectedStatus) * 25}%`,
+                }} 
+              />
+              {statusOptions.map((st) => (
+                <button
+                  key={st}
+                  onClick={() => setSelectedStatus(st)}
+                  className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-tighter transition-all duration-200 ${
+                    selectedStatus === st
+                      ? 'text-indigo-600 dark:text-indigo-400'
+                      : 'text-slate-400 dark:text-slate-500'
+                  }`}
+                >
+                  {st}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -273,7 +282,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
             </div>
             <p className="text-base font-bold text-slate-900 dark:text-white mb-1">{T.noSales}</p>
             <p className="text-xs text-slate-400 dark:text-slate-500 max-w-[200px] leading-relaxed">
-              Try adjusting your search query, status, or date range to see more records.
+              Try adjusting your filters to see more records.
             </p>
           </div>
         )}
