@@ -1,28 +1,31 @@
-
-import React, { ErrorInfo, ReactNode } from 'react';
+import React from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface ErrorBoundaryProps {
-  children?: ReactNode;
-  fallback?: ReactNode;
+  children?: React.ReactNode;
+  fallback?: React.ReactNode;
 }
 
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
-  errorInfo: ErrorInfo | null;
+  errorInfo: React.ErrorInfo | null;
 }
 
 /**
  * ErrorBoundary catches errors in its child component tree.
  */
-// Inherit from React.Component with explicit generic types to ensure setState, state, and props are available.
+// Fix: Explicitly extend React.Component to ensure inherited properties like setState, props, and state are correctly typed and recognized.
 export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  public state: ErrorBoundaryState = { 
-    hasError: false, 
-    error: null, 
-    errorInfo: null 
-  };
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    // Fix: Initialize state within the constructor to ensure it is correctly associated with the base class instance.
+    this.state = { 
+      hasError: false, 
+      error: null, 
+      errorInfo: null 
+    };
+  }
 
   /**
    * Static method to update state when an error occurs during rendering.
@@ -34,9 +37,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   /**
    * Log error information and update state with component stack details.
    */
-  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+  public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error('ErrorBoundary caught:', error, errorInfo);
-    // Fix: Use this.setState which is inherited from React.Component
+    // Fix: Properly call setState from the React.Component base class.
     this.setState({ errorInfo });
   }
 
@@ -44,14 +47,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
    * Reset the error state, allowing the user to attempt a reload.
    */
   private handleRetry = () => {
-    // Fix: Use this.setState which is inherited from React.Component
+    // Fix: Properly call setState from the React.Component base class.
     this.setState({ hasError: false, error: null, errorInfo: null });
   };
 
-  public render(): ReactNode {
-    // Access inherited state and props from React.Component base class.
+  public render(): React.ReactNode {
+    // Fix: Access inherited state and props from the React.Component base class.
     const { hasError, error, errorInfo } = this.state;
-    // Fix: Use this.props which is inherited from React.Component
     const { children, fallback } = this.props;
 
     // If an error was captured, render the fallback UI.

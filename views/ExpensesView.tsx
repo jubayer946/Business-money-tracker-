@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { Receipt, Filter, Plus, Upload, ChevronDown, Package, Edit2, Settings } from 'lucide-react';
+import { Receipt, Filter, Plus, Upload, ChevronDown, Package, Settings } from 'lucide-react';
 import { MobileHeader } from '../components/MobileHeader';
 import { CSVImport } from '../components/CSVImport';
 import { CategorySelector } from '../components/CategorySelector';
-import { CategoryManager, getCategoryConfig } from '../components/CategoryManager';
-import { AccessibleModal } from '../components/AccessibleModal';
+import { CategoryManager } from '../components/CategoryManager';
+import { useCategories } from '../contexts/CategoryContext';
 import { Expense, Product, AdPlatform } from '../types';
 import { formatCurrency, getDaysAgo, getLocalDateString } from '../utils';
 
@@ -47,6 +47,8 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const { getCategory } = useCategories();
 
   const handleCSVImport = async (newExpenses: Omit<Expense, 'id'>[]) => {
     if (onBatchImport) {
@@ -183,7 +185,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
 
         <div className="space-y-3">
           {filteredExpenses.map(expense => (
-            <ExpenseCard key={expense.id} expense={expense} isExpanded={expandedId === expense.id} onToggle={() => setExpandedId(expandedId === expense.id ? null : expense.id)} onEdit={() => onEdit(expense)} onDelete={() => onDelete(expense)} />
+            <ExpenseCard key={expense.id} expense={expense} isExpanded={expandedId === expense.id} onToggle={() => setExpandedId(expandedId === expense.id ? null : expense.id)} onEdit={() => onEdit(expense)} onDelete={() => onDelete(expense)} getCategory={getCategory} />
           ))}
           
           {filteredExpenses.length === 0 && (
@@ -233,8 +235,8 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
   );
 };
 
-const ExpenseCard: React.FC<{ expense: Expense; isExpanded: boolean; onToggle: () => void; onEdit: () => void; onDelete: () => void; }> = ({ expense, isExpanded, onToggle, onEdit, onDelete }) => {
-  const config = getCategoryConfig(expense.category);
+const ExpenseCard: React.FC<{ expense: Expense; isExpanded: boolean; onToggle: () => void; onEdit: () => void; onDelete: () => void; getCategory: (id: string) => any; }> = ({ expense, isExpanded, onToggle, onEdit, onDelete, getCategory }) => {
+  const config = getCategory(expense.category);
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr + 'T00:00:00');
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -293,8 +295,8 @@ const ExpenseCard: React.FC<{ expense: Expense; isExpanded: boolean; onToggle: (
             </div>
           )}
           <div className="flex gap-2 pt-3">
-            <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="flex-1 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 active:scale-95 transition-all"> Edit </button>
-            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="flex-1 py-3 bg-red-50 dark:bg-red-900/20 rounded-2xl text-[10px] font-black uppercase tracking-widest text-red-600 active:scale-95 transition-all"> Delete </button>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(expense); }} className="flex-1 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 active:scale-95 transition-all"> Edit </button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(expense); }} className="flex-1 py-3 bg-red-50 dark:bg-red-900/20 rounded-2xl text-[10px] font-black uppercase tracking-widest text-red-600 active:scale-95 transition-all"> Delete </button>
           </div>
         </div>
       )}

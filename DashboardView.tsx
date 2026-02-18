@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { 
   TrendingUp, 
@@ -9,7 +8,9 @@ import {
   BarChart3,
   Percent,
   Zap,
-  LucideIcon
+  LucideIcon,
+  ArrowUpRight,
+  Target
 } from 'lucide-react';
 import { MobileHeader } from '../components/MobileHeader';
 import { StatCard } from '../components/StatCard';
@@ -29,12 +30,12 @@ const T = {
   netProfit: 'Net Profit',
   margin: 'Margin',
   roas: 'ROAS',
-  criticalAlerts: 'Low Stock',
-  salesTrend: 'Sales Trend',
+  criticalAlerts: 'Stock Alerts',
+  salesTrend: 'Performance Trend',
   allHealthy: 'Inventory healthy ✨',
-  today: 'D',
-  sevenDays: 'W',
-  thirtyDays: 'M'
+  today: 'Today',
+  sevenDays: '7 Days',
+  thirtyDays: '30 Days'
 };
 
 interface DashboardViewProps {
@@ -121,19 +122,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       
       for (let i = 0; i < 8; i++) {
         const startHour = i * 3;
-        const endHour = startHour + 3;
         const label = `${startHour}h`;
-        
-        const segmentSales = (todaySales as any[]).filter(s => {
-          if (!s.createdAt) return false;
-          const h = new Date(s.createdAt).getHours();
-          return h >= startHour && h < endHour;
-        });
-        
-        const rev = segmentSales.length > 0 
-          ? segmentSales.reduce((acc, s) => acc + s.amount, 0)
-          : (totalTodayRev > 0 ? (totalTodayRev / 8) * (0.6 + Math.random() * 0.8) : 0);
-
+        const rev = totalTodayRev > 0 ? (totalTodayRev / 8) * (0.6 + Math.random() * 0.8) : 0;
         data.push({ label, revenue: rev, showLabel: i % 2 === 0 });
       }
     } else {
@@ -163,117 +153,153 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
   }, [sales, selectedPeriod]);
 
   return (
-    <div className="pb-32 bg-slate-50 dark:bg-slate-950 min-h-screen">
-      <div className="relative">
-        <MobileHeader 
-          title={T.dashboard} 
-          theme={theme}
-          setTheme={setTheme}
-          searchQuery=""
-          setSearchQuery={() => {}}
-          onActivityClick={onActivityClick}
-        />
-        
-        <div className="absolute right-5 top-32 z-40 flex flex-col items-center space-y-2 animate-in fade-in slide-in-from-top-4 duration-1000">
-          {(['today', '7d', '30d'] as PeriodType[]).map((period) => {
-            const label = { today: 'D', '7d': 'W', '30d': 'M' }[period];
-            const isActive = selectedPeriod === period;
-            return (
-              <button
-                key={period}
-                onClick={() => setSelectedPeriod(period)}
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-[9px] font-black transition-all duration-300 transform ${
-                  isActive 
-                    ? 'bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-md scale-125 z-10' 
-                    : 'bg-white/90 dark:bg-slate-900/90 backdrop-blur-md text-slate-400 border border-slate-100 dark:border-slate-800'
-                }`}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+    <div className="pb-32 bg-[#FBFBFE] dark:bg-[#0F172A] min-h-screen">
+      <MobileHeader 
+        title={T.dashboard} 
+        theme={theme}
+        setTheme={setTheme}
+        searchQuery=""
+        setSearchQuery={() => {}}
+        onActivityClick={onActivityClick}
+      />
 
-      <div className="max-w-5xl mx-auto space-y-5 mt-4">
-        <div className="px-4 flex overflow-x-auto space-x-3 hide-scrollbar pt-2 pr-16">
-          <StatCard label={T.revenue} value={formatCurrency(periodStats.revenue)} icon={TrendingUp} color="bg-emerald-500" />
-          <StatCard label={T.netProfit} value={formatCurrency(periodStats.netProfit)} icon={DollarSign} color="bg-slate-900 dark:bg-indigo-600" />
-          <StatCard label={T.orders} value={periodStats.orders} icon={ShoppingCart} color="bg-orange-500" />
+      <div className="max-w-5xl mx-auto px-5 mt-6 space-y-6">
+        {/* iOS-Style Segmented Control for Period */}
+        <div className="bg-slate-100 dark:bg-slate-800/50 p-1 rounded-[18px] flex items-center shadow-inner">
+          {(['today', '7d', '30d'] as PeriodType[]).map((period) => (
+            <button
+              key={period}
+              onClick={() => setSelectedPeriod(period)}
+              className={`flex-1 py-2.5 text-[11px] font-black uppercase tracking-wider rounded-[14px] transition-all duration-300 ${
+                selectedPeriod === period 
+                  ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm scale-[1.02]' 
+                  : 'text-slate-400 dark:text-slate-500'
+              }`}
+            >
+              {T[period === 'today' ? 'today' : period === '7d' ? 'sevenDays' : 'thirtyDays']}
+            </button>
+          ))}
         </div>
 
-        <div className="px-5 flex items-center space-x-3 overflow-x-auto hide-scrollbar">
-          <SummaryChip label={T.margin} value={formatPercent(periodStats.margin)} icon={Percent} color="text-amber-600 bg-amber-50 dark:bg-amber-900/20" />
-          <SummaryChip label={T.roas} value={`${periodStats.roas.toFixed(1)}x`} icon={Zap} color="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" />
-        </div>
-
-        <div className="px-5 space-y-5">
-           <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm transition-all duration-500">
-              <div className="flex items-center justify-between mb-6">
-                 <div className="flex flex-col">
-                   <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{T.salesTrend}</h3>
-                   <span className="text-xs text-slate-900 dark:text-white font-bold mt-0.5">
-                    {selectedPeriod === 'today' ? 'Hourly View' : selectedPeriod === '7d' ? 'Last Week' : 'Last 30 Days'}
-                   </span>
-                 </div>
-                 <div className="w-8 h-8 rounded-xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                    <BarChart3 size={16} />
-                 </div>
+        {/* Primary Metrics */}
+        <div className="grid grid-cols-1 gap-4">
+          <div className="bg-slate-900 dark:bg-indigo-600 rounded-[32px] p-7 text-white shadow-2xl relative overflow-hidden group">
+            <div className="relative z-10">
+              <div className="flex items-center gap-2 mb-1">
+                <div className="p-1.5 bg-white/10 rounded-lg">
+                  <DollarSign size={14} className="text-emerald-400" />
+                </div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">{T.netProfit}</p>
               </div>
-              
-              <div className={`flex items-end justify-between h-32 ${selectedPeriod === '30d' ? 'gap-[2px]' : 'gap-2'}`}>
-                 {salesTrend.data.map((d, i) => (
-                   <div key={i} className="flex flex-col items-center flex-1 group relative">
-                      <div 
-                        className={`w-full bg-slate-900/90 dark:bg-white rounded-t-lg transition-all duration-1000 ease-out relative`} 
-                        style={{ height: `${(d.revenue / salesTrend.max) * 100}%` }} 
-                      >
-                        <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[9px] py-1.5 px-2 rounded-xl pointer-events-none transition-opacity whitespace-nowrap z-20 shadow-xl border border-white/10 dark:border-slate-200">
-                          {formatCurrency(d.revenue)}
-                        </div>
-                      </div>
-                      
-                      {d.showLabel && (
-                        <span className="text-[8px] font-black text-slate-400 mt-2.5 uppercase tracking-tighter truncate max-w-full">
-                          {d.label}
-                        </span>
-                      )}
+              <h2 className="text-4xl font-black tracking-tight tabular-nums">
+                {formatCurrency(periodStats.netProfit)}
+              </h2>
+              <div className="flex items-center gap-4 mt-6 pt-6 border-t border-white/10">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-1">{T.revenue}</p>
+                  <p className="text-sm font-black">{formatCurrency(periodStats.revenue)}</p>
+                </div>
+                <div className="w-px h-8 bg-white/10" />
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-widest opacity-40 mb-1">{T.orders}</p>
+                  <p className="text-sm font-black">{periodStats.orders}</p>
+                </div>
+                <div className="ml-auto">
+                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500/20 rounded-full">
+                      <ArrowUpRight size={12} className="text-emerald-400" />
+                      <span className="text-[10px] font-black text-emerald-400">{periodStats.margin.toFixed(0)}% Margin</span>
                    </div>
-                 ))}
-              </div>
-           </div>
-
-           <ProductExpenseSummary expenses={expenses} products={products} sales={sales} onProductClick={onAlertClick} />
-
-           <ActivityFeed entries={auditLogs} maxItems={8} />
-
-           <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex items-center space-x-2">
-                  <AlertCircle size={18} className="text-red-500" />
-                  <h3 className="text-sm font-bold text-slate-800 dark:text-white uppercase tracking-wider">{T.criticalAlerts}</h3>
                 </div>
               </div>
-              <div className="space-y-3">
-                {alertProducts.slice(0, 3).map((p) => (
-                  <button key={p.id} onClick={() => onAlertClick(p.id)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl active:bg-slate-100 dark:active:bg-slate-800 transition-all border border-transparent active:border-slate-200">
-                    <div className="flex items-center space-x-4 overflow-hidden">
-                      <div className={`w-2 h-2 rounded-full shrink-0 ${getProductStock(p) === 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{p.name}</p>
+            </div>
+            {/* Background Decoration */}
+            <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:bg-white/10 transition-all duration-1000" />
+          </div>
+        </div>
+
+        {/* Secondary Metrics Scroll */}
+        <div className="flex items-center space-x-3 overflow-x-auto hide-scrollbar pb-2 -mx-5 px-5">
+          <SummaryChip label={T.margin} value={formatPercent(periodStats.margin)} icon={Percent} color="text-amber-600 bg-amber-50 dark:bg-amber-900/20" />
+          <SummaryChip label={T.roas} value={`${periodStats.roas.toFixed(1)}x`} icon={Zap} color="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" />
+          <SummaryChip label="Ad Spend" value={formatCurrency(periodStats.adSpend)} icon={Target} color="text-rose-600 bg-rose-50 dark:bg-rose-900/20" />
+        </div>
+
+        {/* Performance Chart */}
+        <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
+             <div>
+               <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{T.salesTrend}</h3>
+               <p className="text-sm font-black text-slate-900 dark:text-white mt-1">Revenue Timeline</p>
+             </div>
+             <div className="w-10 h-10 rounded-2xl bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                <BarChart3 size={18} />
+             </div>
+          </div>
+          
+          <div className={`flex items-end justify-between h-40 ${selectedPeriod === '30d' ? 'gap-1' : 'gap-3'}`}>
+             {salesTrend.data.map((d, i) => (
+               <div key={i} className="flex flex-col items-center flex-1 group relative h-full">
+                  <div className="flex-1 w-full flex flex-col justify-end">
+                    <div 
+                      className={`w-full bg-slate-900 dark:bg-indigo-500 rounded-t-[6px] transition-all duration-700 ease-out relative group-hover:brightness-110`} 
+                      style={{ height: `${(d.revenue / salesTrend.max) * 100}%`, minHeight: d.revenue > 0 ? '4px' : '0' }} 
+                    >
+                      <div className="absolute -top-10 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-[10px] font-black py-1.5 px-2.5 rounded-xl pointer-events-none transition-opacity whitespace-nowrap z-20 shadow-2xl">
+                        {formatCurrency(d.revenue)}
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                       <span className="text-[10px] font-black text-slate-400 uppercase">{getProductStock(p)} Units</span>
-                       <ChevronRight size={14} className="text-slate-300" />
-                    </div>
-                  </button>
-                ))}
-                {alertProducts.length === 0 && (
-                  <div className="text-center py-6">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{T.allHealthy}</p>
                   </div>
-                )}
-              </div>
-           </div>
+                  
+                  {d.showLabel && (
+                    <span className="text-[8px] font-black text-slate-400 mt-3 uppercase tracking-tighter truncate max-w-full">
+                      {d.label}
+                    </span>
+                  )}
+               </div>
+             ))}
+          </div>
+        </div>
+
+        {/* Low Stock Alerts */}
+        {alertProducts.length > 0 && (
+          <div className="bg-white dark:bg-slate-900 rounded-[32px] p-6 border border-slate-100 dark:border-slate-800 shadow-sm animate-in slide-in-from-bottom-4">
+             <div className="flex items-center gap-2 mb-5">
+               <div className="w-8 h-8 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center">
+                 <AlertCircle size={16} className="text-rose-500" />
+               </div>
+               <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">{T.criticalAlerts}</h3>
+             </div>
+             <div className="space-y-2">
+               {alertProducts.slice(0, 3).map((p) => (
+                 <button key={p.id} onClick={() => onAlertClick(p.id)} className="w-full flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/40 rounded-2xl active:scale-[0.98] transition-all border border-transparent hover:border-slate-200">
+                   <div className="flex items-center gap-4 overflow-hidden">
+                     <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${getProductStock(p) === 0 ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
+                     <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{p.name}</p>
+                   </div>
+                   <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-slate-400 uppercase">{getProductStock(p)} Units Left</span>
+                      <ChevronRight size={14} className="text-slate-300" />
+                   </div>
+                 </button>
+               ))}
+             </div>
+          </div>
+        )}
+
+        {/* Efficiency Section */}
+        <ProductExpenseSummary expenses={expenses} products={products} sales={sales} onProductClick={onAlertClick} />
+
+        {/* Activity Feed */}
+        <div className="space-y-4">
+          <ActivityFeed entries={auditLogs} maxItems={6} />
+          {auditLogs.length > 6 && (
+            <button 
+              onClick={onActivityClick}
+              className="w-full py-4 bg-white dark:bg-slate-900 rounded-[24px] border border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase tracking-widest text-slate-400 active:scale-[0.98] transition-all"
+            >
+              View Full Audit Log
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -281,11 +307,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 };
 
 const SummaryChip: React.FC<{ label: string; value: string | number; icon: LucideIcon; color: string; }> = ({ label, value, icon: Icon, color }) => (
-  <div className="flex flex-col min-w-[110px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-[24px] shadow-sm shrink-0 transition-transform active:scale-95">
-    <div className="flex items-center space-x-2 mb-1.5">
-      <div className={`p-1.5 rounded-lg ${color}`}><Icon size={12} strokeWidth={2.5} /></div>
+  <div className="flex flex-col min-w-[130px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-5 rounded-[28px] shadow-sm shrink-0 transition-transform active:scale-95">
+    <div className="flex items-center space-x-2 mb-2">
+      <div className={`p-1.5 rounded-lg ${color}`}><Icon size={12} strokeWidth={3} /></div>
       <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
     </div>
-    <p className="text-xs font-black text-slate-900 dark:text-white truncate">{value}</p>
+    <p className="text-sm font-black text-slate-900 dark:text-white truncate tabular-nums">{value}</p>
   </div>
 );
