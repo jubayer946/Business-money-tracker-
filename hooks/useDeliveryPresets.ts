@@ -1,19 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 
 const STORAGE_KEY = 'delivery_presets';
-const DEFAULT_PRESETS = [0, 5, 10, 15, 20, 25];
+const DEFAULT_PRESETS = [0, 70, 120];  // ◄── YOUR VALUES
 
 export const useDeliveryPresets = () => {
   const [presets, setPresets] = useState<number[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse delivery presets', e);
-      }
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : DEFAULT_PRESETS;
+    } catch {
+      return DEFAULT_PRESETS;
     }
-    return DEFAULT_PRESETS;
   });
 
   useEffect(() => {
@@ -22,7 +19,7 @@ export const useDeliveryPresets = () => {
 
   const addPreset = useCallback((value: number) => {
     setPresets(prev => {
-      if (prev.includes(value)) return prev;
+      if (prev.includes(value) || prev.length >= 10) return prev;
       return [...prev, value].sort((a, b) => a - b);
     });
   }, []);
@@ -33,9 +30,8 @@ export const useDeliveryPresets = () => {
 
   const updatePreset = useCallback((oldValue: number, newValue: number) => {
     setPresets(prev => {
-      const filtered = prev.filter(p => p !== oldValue);
-      if (filtered.includes(newValue)) return filtered.sort((a, b) => a - b);
-      return [...filtered, newValue].sort((a, b) => a - b);
+      if (oldValue !== newValue && prev.includes(newValue)) return prev;
+      return prev.map(p => p === oldValue ? newValue : p).sort((a, b) => a - b);
     });
   }, []);
 
@@ -43,14 +39,12 @@ export const useDeliveryPresets = () => {
     setPresets(DEFAULT_PRESETS);
   }, []);
 
-  const isDefault = JSON.stringify(presets) === JSON.stringify(DEFAULT_PRESETS);
-
   return {
     presets,
     addPreset,
     removePreset,
     updatePreset,
     resetToDefaults,
-    isDefault,
+    isDefault: JSON.stringify(presets) === JSON.stringify(DEFAULT_PRESETS),
   };
 };
