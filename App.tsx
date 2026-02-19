@@ -71,6 +71,7 @@ const normalizeSale = (id: string, data: any): Sale => ({
   items: Number(data?.items ?? 0),
   itemsDetail: Array.isArray(data?.itemsDetail) ? data.itemsDetail : undefined,
   status: (data?.status ?? 'Paid') as any,
+  deliveryCharge: data?.deliveryCharge != null ? Number(data.deliveryCharge) : undefined,
 });
 
 const normalizeExpense = (id: string, data: any): Expense => ({
@@ -203,7 +204,8 @@ const App: React.FC = () => {
     async (data: any) => {
       const sanitizedQuantity = sanitizeNumber(data.quantity, { min: 1, decimals: 0 });
       const sanitizedPrice = sanitizeNumber(data.price, { min: 0 });
-      const totalAmount = sanitizedQuantity * sanitizedPrice;
+      const sanitizedDelivery = data.deliveryCharge != null ? sanitizeNumber(data.deliveryCharge, { min: 0 }) : 0;
+      const totalAmount = (sanitizedQuantity * sanitizedPrice) + sanitizedDelivery;
       
       const saleData = cleanObject({
         productId: String(data.productId),
@@ -214,6 +216,7 @@ const App: React.FC = () => {
         date: String(data.date || getLocalDateString()),
         items: sanitizedQuantity,
         status: data.status || 'Paid',
+        deliveryCharge: sanitizedDelivery > 0 ? sanitizedDelivery : null,
       });
 
       if (editingSale) {

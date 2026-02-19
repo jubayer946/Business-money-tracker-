@@ -63,6 +63,14 @@ export const SaleItem: React.FC<SaleItemProps> = ({ sale, expanded, onExpand, on
                  <Hash size={12} className="text-indigo-400" />
                  <span className="text-[11px] font-bold text-gray-500 dark:text-slate-400">Qty: {sale.items}</span>
               </div>
+              {sale.deliveryCharge && sale.deliveryCharge > 0 && (
+                <div className="flex items-center space-x-2 col-span-2">
+                   <DollarSign size={12} className="text-emerald-500" />
+                   <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+                     Delivery Charge: ${sale.deliveryCharge.toFixed(2)}
+                   </span>
+                </div>
+              )}
            </div>
 
            <div className="flex space-x-3 mt-4">

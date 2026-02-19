@@ -41,6 +41,7 @@ export interface SaleItemDetail {
   variantName?: string;
   quantity: number;
   pricePerItem: number;
+  deliveryCharge?: number;
 }
 
 export interface Sale {
@@ -54,6 +55,7 @@ export interface Sale {
   items: number;
   itemsDetail?: SaleItemDetail[];
   status?: SaleStatus;
+  deliveryCharge?: number;
 }
 
 // ==================== EXPENSE TYPES ====================

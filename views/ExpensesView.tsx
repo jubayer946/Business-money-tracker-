@@ -295,8 +295,8 @@ const ExpenseCard: React.FC<{ expense: Expense; isExpanded: boolean; onToggle: (
             </div>
           )}
           <div className="flex gap-2 pt-3">
-            <button onClick={(e) => { e.stopPropagation(); onEdit(expense); }} className="flex-1 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 active:scale-95 transition-all"> Edit </button>
-            <button onClick={(e) => { e.stopPropagation(); onDelete(expense); }} className="flex-1 py-3 bg-red-50 dark:bg-red-900/20 rounded-2xl text-[10px] font-black uppercase tracking-widest text-red-600 active:scale-95 transition-all"> Delete </button>
+            <button onClick={(e) => { e.stopPropagation(); onEdit(); }} className="flex-1 py-3 bg-slate-50 dark:bg-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 active:scale-95 transition-all"> Edit </button>
+            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="flex-1 py-3 bg-red-50 dark:bg-red-900/20 rounded-2xl text-[10px] font-black uppercase tracking-widest text-red-600 active:scale-95 transition-all"> Delete </button>
           </div>
         </div>
       )}
