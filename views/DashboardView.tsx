@@ -8,6 +8,7 @@ import {
   BarChart3,
   Percent,
   Zap,
+  Truck,
   LucideIcon,
   ArrowUpRight,
   Target,
@@ -83,6 +84,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     });
 
     const revenue = periodSales.reduce((acc, s) => acc + s.amount, 0);
+    const deliveryRevenue = periodSales.reduce((acc, s) => acc + (s.deliveryCharge || 0), 0);
     const adSpend = periodExpenses.reduce((acc, a) => acc + a.amount, 0);
     
     const totalCostOfGoods = periodSales.reduce((acc, sale) => {
@@ -101,7 +103,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     const margin = revenue > 0 ? (netProfit / revenue) * 100 : 0;
     const roas = adSpend > 0 ? revenue / adSpend : 0;
 
-    return { revenue, orders: periodSales.length, adSpend, netProfit, margin, roas };
+    return { revenue, deliveryRevenue, orders: periodSales.length, adSpend, netProfit, margin, roas };
   }, [sales, expenses, products, selectedPeriod]);
 
   const alertProducts = useMemo(() => 
@@ -222,6 +224,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           <SummaryChip label={T.margin} value={formatPercent(periodStats.margin)} icon={Percent} color="text-amber-600 bg-amber-50 dark:bg-amber-900/20" />
           <SummaryChip label={T.roas} value={`${periodStats.roas.toFixed(1)}x`} icon={Zap} color="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" />
           <SummaryChip label="Ad Spend" value={formatCurrency(periodStats.adSpend)} icon={Target} color="text-rose-600 bg-rose-50 dark:bg-rose-900/20" />
+          {periodStats.deliveryRevenue > 0 && (
+            <SummaryChip label="Delivery" value={formatCurrency(periodStats.deliveryRevenue)} icon={Truck} color="text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20" />
+          )}
         </div>
 
         {/* Performance Chart */}

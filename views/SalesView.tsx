@@ -114,12 +114,14 @@ export const SalesView: React.FC<SalesViewProps> = ({
     if (filteredAndSortedSales.length === 0) return;
 
     try {
-      const headers = ['Date', 'Product', 'Variant', 'Units', 'Amount ($)', 'Status'];
+      const headers = ['Date', 'Product', 'Variant', 'Units', 'Price/Unit ($)', 'Delivery ($)', 'Total Amount ($)', 'Status'];
       const rows = filteredAndSortedSales.map(s => [
         s.date,
         s.productName,
         s.variantName || 'N/A',
         s.items,
+        (s.items > 0 ? (s.amount - (s.deliveryCharge || 0)) / s.items : 0).toFixed(2),
+        (s.deliveryCharge || 0).toFixed(2),
         s.amount.toFixed(2),
         s.status || 'Paid'
       ]);
