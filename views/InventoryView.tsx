@@ -1,16 +1,24 @@
-// Updated content of InventoryView.tsx with fixes
+import React from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getInventory } from '../actions/inventoryActions';
+import InventoryItem from './InventoryItem';
 
-// Example snippet based on provided changes
-class InventoryView extends React.Component {
-    // ... other code
+export const InventoryView = () => {
+  const dispatch = useDispatch();
+  const inventory = useSelector(state => state.inventory);
 
-    render() {
-        return (
-            <div>
-                {/* Other UI components */}
-                <p className="dark:text-slate-50">Item</p> {/* Changed to dark:text-slate-50 */}
-                <button className="disabled:opacity-100" disabled>Disabled Button</button> {/* Completed opacity class */}
-            </div>
-        );
-    }
-}
+  React.useEffect(() => {
+    dispatch(getInventory());
+  }, [dispatch]);
+
+  return (
+    <div className="bg-white dark:bg-gray-800 p-4 rounded shadow">
+      <h1 className="text-2xl font-bold dark:text-slate-50">Inventory</h1>
+      <ul className="list-disc list-inside">
+        {inventory.map(item => (
+          <InventoryItem key={item.id} item={item} />
+        ))}
+      </ul>
+    </div>
+  );
+};
