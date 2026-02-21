@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { MobileHeader } from '../components/MobileHeader';
 import { SaleItem } from '../components/SaleItem';
 import { Sale, SaleStatus } from '../types';
@@ -67,6 +67,15 @@ export const SalesView: React.FC<SalesViewProps> = ({
   const [selectedRange, setSelectedRange] = useState<DateRange>('all');
   const [selectedStatus, setSelectedStatus] = useState<SaleStatus | 'All'>('All');
   const [showExportSuccess, setShowExportSuccess] = useState(false);
+  const exportToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (exportToastTimeoutRef.current) {
+        clearTimeout(exportToastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const filteredAndSortedSales = useMemo(() => {
     const now = new Date();
@@ -97,7 +106,7 @@ export const SalesView: React.FC<SalesViewProps> = ({
       ],
       threshold: 0.3,
       distance: 100,
-      minMatchCharLength: 2,
+      minMatchCharLength: 1,
     });
 
     return searchFuse.search(q).map(result => result.item);
@@ -132,7 +141,15 @@ export const SalesView: React.FC<SalesViewProps> = ({
       downloadCSV(filename, csvContent);
       
       setShowExportSuccess(true);
-      setTimeout(() => setShowExportSuccess(false), 3000);
+      
+      if (exportToastTimeoutRef.current) {
+        clearTimeout(exportToastTimeoutRef.current);
+      }
+
+      exportToastTimeoutRef.current = setTimeout(() => {
+        setShowExportSuccess(false);
+        exportToastTimeoutRef.current = null;
+      }, 3000);
     } catch (error) {
       console.error('CSV export failed:', error);
     }

@@ -63,7 +63,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
       keys: ['name', 'platform', 'productNames'],
       threshold: 0.3,
       distance: 100,
-      minMatchCharLength: 2,
+      minMatchCharLength: 1,
     });
   }, [expenses]);
 
@@ -86,7 +86,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
       keys: ['name', 'platform', 'productNames'],
       threshold: 0.3,
       distance: 100,
-      minMatchCharLength: 2,
+      minMatchCharLength: 1,
     });
 
     return searchFuse.search(q).map(result => result.item);

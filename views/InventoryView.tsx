@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { MobileHeader } from '../components/MobileHeader';
 import { SwipeableProductItem } from '../components/SwipeableProductItem';
 import { Product, Sale, AdCost } from '../types';
@@ -57,13 +57,22 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   onActivityClick
 }) => {
   const [showExportSuccess, setShowExportSuccess] = useState(false);
+  const exportToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (exportToastTimeoutRef.current) {
+        clearTimeout(exportToastTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const fuse = useMemo(() => {
     return new Fuse(products, {
       keys: ['name', 'variants.name'],
       threshold: 0.3,
       distance: 100,
-      minMatchCharLength: 2,
+      minMatchCharLength: 1,
     });
   }, [products]);
 
@@ -81,7 +90,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
     let outCount = 0;
     let totalValue = 0;
 
-    filteredProducts.forEach(p => {
+    products.forEach(p => {
       const stock = getProductStock(p);
       const status = getStatusFromStock(stock);
       totalUnits += stock;
@@ -91,13 +100,13 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
     });
 
     return {
-      skus: filteredProducts.length,
+      skus: products.length,
       units: totalUnits,
       low: lowCount,
       out: outCount,
       value: totalValue
     };
-  }, [filteredProducts]);
+  }, [products]);
 
   const handleExportCSV = () => {
     if (filteredProducts.length === 0) return;
@@ -136,7 +145,15 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
       downloadCSV(filename, csvContent);
       
       setShowExportSuccess(true);
-      setTimeout(() => setShowExportSuccess(false), 3000);
+      
+      if (exportToastTimeoutRef.current) {
+        clearTimeout(exportToastTimeoutRef.current);
+      }
+
+      exportToastTimeoutRef.current = setTimeout(() => {
+        setShowExportSuccess(false);
+        exportToastTimeoutRef.current = null;
+      }, 3000);
     } catch (error) {
       console.error('CSV export failed:', error);
       alert('Failed to export CSV. Please try again.');
@@ -274,7 +291,7 @@ const SummaryChip: React.FC<SummaryChipProps> = ({ label, value, icon: Icon, col
         {label}
       </span>
     </div>
-    <p className="text-xs font-black text-slate-900 dark:text-slate-5 truncate">
+    <p className="text-xs font-black text-slate-900 dark:text-slate-50 truncate">
       {value}
     </p>
   </div>
