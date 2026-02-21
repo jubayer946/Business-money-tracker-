@@ -4,11 +4,22 @@ import { MobileHeader } from '../components/MobileHeader';
 import { SwipeableProductItem } from '../components/SwipeableProductItem';
 import { Product, Sale, AdCost } from '../types';
 import { getProductStock, getStatusFromStock, generateCSV, downloadCSV, generateFilename } from '../utils';
-import { Hash, Package, AlertTriangle, AlertCircle, DollarSign, Download, CheckCircle2, LucideIcon } from 'lucide-react';
+import { Hash, Package, AlertTriangle, AlertCircle, DollarSign, Download, CheckCircle2, LucideIcon, TrendingUp, Percent } from 'lucide-react';
 import { VirtualProductList } from '../components/VirtualProductList';
 import Fuse from 'fuse.js';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
+type StockFilter = 'all' | 'in' | 'low' | 'out';
+
+type SortOption =
+  | 'name-asc'
+  | 'name-desc'
+  | 'stock-asc'
+  | 'stock-desc'
+  | 'value-asc'
+  | 'value-desc';
+
+type AnalysisPeriod = '7d' | '30d' | '90d';
 
 const T = {
   inventory: 'Stock Management',
@@ -23,6 +34,9 @@ const T = {
     low: 'Low Stock',
     out: 'Out of Stock',
     value: 'Stock Value',
+    cost: 'Stock Cost',
+    profit: 'Potential Profit',
+    margin: 'Avg Margin %',
     export: 'Export CSV'
   }
 };
@@ -57,6 +71,9 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   onActivityClick
 }) => {
   const [showExportSuccess, setShowExportSuccess] = useState(false);
+  const [stockFilter, setStockFilter] = useState<StockFilter>('all');
+  const [sortOption, setSortOption] = useState<SortOption>('name-asc');
+  const [analysisPeriod, setAnalysisPeriod] = useState<AnalysisPeriod>('30d');
   const exportToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -84,32 +101,102 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
     return results.map(result => result.item);
   }, [products, searchQuery, fuse]);
 
+  const visibleProducts = useMemo(() => {
+    return filteredProducts.filter(p => {
+      const stock = getProductStock(p);
+      const status = getStatusFromStock(stock);
+
+      switch (stockFilter) {
+        case 'low':
+          return status === 'Low Stock';
+        case 'out':
+          return status === 'Out of Stock';
+        case 'in':
+          return stock > 0 && status !== 'Low Stock';
+        case 'all':
+        default:
+          return true;
+      }
+    });
+  }, [filteredProducts, stockFilter]);
+
+  const sortedProducts = useMemo(() => {
+    const productsToSort = [...visibleProducts];
+
+    productsToSort.sort((a, b) => {
+      const stockA = getProductStock(a);
+      const stockB = getProductStock(b);
+      const valueA = stockA * a.price;
+      const valueB = stockB * b.price;
+
+      switch (sortOption) {
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'stock-asc':
+          return stockA - stockB;
+        case 'stock-desc':
+          return stockB - stockA;
+        case 'value-asc':
+          return valueA - valueB;
+        case 'value-desc':
+          return valueB - valueA;
+        default:
+          return 0;
+      }
+    });
+
+    return productsToSort;
+  }, [visibleProducts, sortOption]);
+
   const metrics = useMemo(() => {
     let totalUnits = 0;
     let lowCount = 0;
     let outCount = 0;
     let totalValue = 0;
+    let totalCost = 0;
 
-    products.forEach(p => {
+    let marginSum = 0;
+    let marginCount = 0;
+
+    visibleProducts.forEach(p => {
       const stock = getProductStock(p);
       const status = getStatusFromStock(stock);
+      const price = p.price ?? 0;
+      const costPrice = p.costPrice ?? 0;
+
       totalUnits += stock;
-      totalValue += (stock * p.price);
+      totalValue += stock * price;
+      totalCost += stock * costPrice;
+
       if (status === 'Low Stock') lowCount++;
       if (status === 'Out of Stock') outCount++;
+
+      if (price > 0 && p.costPrice != null) {
+        const marginRatio = (price - costPrice) / price;
+        marginSum += marginRatio;
+        marginCount++;
+      }
     });
 
+    const totalProfit = totalValue - totalCost;
+    const avgMarginPct = marginCount ? (marginSum / marginCount) * 100 : 0;
+
     return {
-      skus: products.length,
+      skus: visibleProducts.length,
       units: totalUnits,
       low: lowCount,
       out: outCount,
-      value: totalValue
+      value: totalValue,
+      cost: totalCost,
+      profit: totalProfit,
+      marginPct: avgMarginPct
     };
-  }, [products]);
+  }, [visibleProducts]);
 
   const handleExportCSV = () => {
-    if (filteredProducts.length === 0) return;
+    if (sortedProducts.length === 0) return;
 
     try {
       const headers = [
@@ -121,7 +208,7 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         'Variants'
       ];
       
-      const rows = filteredProducts.map(p => {
+      const rows = sortedProducts.map(p => {
         const stock = getProductStock(p);
         const variantsStr = p.hasVariants && p.variants 
           ? p.variants.map(v => `${v.name}: ${v.stock}`).join(' | ')
@@ -215,10 +302,28 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
             icon={DollarSign} 
             color="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" 
           />
+          <SummaryChip 
+            label={T.summary.cost} 
+            value={`$${metrics.cost.toLocaleString()}`} 
+            icon={DollarSign} 
+            color="text-sky-600 bg-sky-50 dark:bg-sky-900/20" 
+          />
+          <SummaryChip 
+            label={T.summary.profit} 
+            value={`$${metrics.profit.toLocaleString()}`} 
+            icon={TrendingUp} 
+            color="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" 
+          />
+          <SummaryChip 
+            label={T.summary.margin} 
+            value={`${metrics.marginPct.toFixed(1)}%`} 
+            icon={Percent} 
+            color="text-violet-600 bg-violet-50 dark:bg-violet-900/20" 
+          />
           
           <button
             onClick={handleExportCSV}
-            disabled={filteredProducts.length === 0}
+            disabled={sortedProducts.length === 0}
             className="flex flex-col min-w-[110px] bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 p-3 rounded-2xl shadow-sm transition-all active:scale-95 disabled:opacity-40 group shrink-0"
           >
             <div className="flex items-center space-x-1.5 mb-1.5">
@@ -235,21 +340,86 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
           </button>
         </div>
 
+        {/* Stock filter buttons */}
+        <div className="flex space-x-2 hide-scrollbar px-1 overflow-x-auto">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'in',  label: 'In Stock' },
+            { key: 'low', label: 'Low Stock' },
+            { key: 'out', label: 'Out of Stock' },
+          ].map(option => (
+            <button
+              key={option.key}
+              onClick={() => setStockFilter(option.key as StockFilter)}
+              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors whitespace-nowrap
+                ${
+                  stockFilter === option.key
+                    ? 'bg-indigo-600 text-white border-indigo-600'
+                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Sort control */}
+        <div className="flex items-center justify-between px-1 mt-2">
+          <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.2em]">
+            Sort
+          </span>
+          <select
+            value={sortOption}
+            onChange={(e) => setSortOption(e.target.value as SortOption)}
+            className="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="name-asc">Name (A–Z)</option>
+            <option value="name-desc">Name (Z–A)</option>
+            <option value="stock-desc">Stock (High → Low)</option>
+            <option value="stock-asc">Stock (Low → High)</option>
+            <option value="value-desc">Value (High → Low)</option>
+            <option value="value-asc">Value (Low → High)</option>
+          </select>
+        </div>
+
+        {/* Analysis period selector */}
+        <div className="flex items-center justify-between px-1 mt-2">
+          <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.2em]">
+            Period
+          </span>
+          <div className="flex space-x-1">
+            {(['7d', '30d', '90d'] as AnalysisPeriod[]).map(period => (
+              <button
+                key={period}
+                onClick={() => setAnalysisPeriod(period)}
+                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-colors
+                  ${
+                    analysisPeriod === period
+                      ? 'bg-indigo-600 text-white border-indigo-600'
+                      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                  }`}
+              >
+                {period.toUpperCase()}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="mb-4 text-[10px] font-black uppercase text-indigo-400 dark:text-indigo-500 tracking-[0.2em] flex items-center px-1">
           <span className="bg-indigo-100 dark:bg-indigo-900/40 px-2 py-0.5 rounded mr-2">{T.tip}</span>
           {T.stockTip}
         </div>
         
-        {filteredProducts.length > 0 ? (
+        {sortedProducts.length > 0 ? (
           <VirtualProductList 
-            products={filteredProducts}
+            products={sortedProducts}
             renderProduct={(p) => (
               <SwipeableProductItem 
                 key={p.id} 
                 product={p} 
                 sales={sales}
                 adCosts={adCosts}
-                analysisPeriod="30d"
+                analysisPeriod={analysisPeriod}
                 expanded={expandedProductId === p.id}
                 onExpand={setExpandedProductId}
                 onEdit={onEdit}

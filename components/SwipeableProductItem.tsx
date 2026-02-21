@@ -8,7 +8,7 @@ interface SwipeableProductItemProps {
   product: Product;
   sales: Sale[];
   adCosts: AdCost[];
-  analysisPeriod: '1d' | '7d' | '30d';
+  analysisPeriod: '7d' | '30d' | '90d';
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
   expanded: boolean;
