@@ -7,6 +7,7 @@ import { CategoryManager } from '../components/CategoryManager';
 import { useCategories } from '../contexts/CategoryContext';
 import { Expense, Product, AdPlatform } from '../types';
 import { formatCurrency, getDaysAgo, getLocalDateString } from '../utils';
+import Fuse from 'fuse.js';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 type DateFilter = 'all' | 'today' | '7d' | '30d';
@@ -57,24 +58,38 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
     }
   };
 
+  const fuse = useMemo(() => {
+    return new Fuse(expenses, {
+      keys: ['name', 'platform', 'productNames'],
+      threshold: 0.3,
+      distance: 100,
+      minMatchCharLength: 2,
+    });
+  }, [expenses]);
+
   const filteredExpenses = useMemo(() => {
     const today = getLocalDateString();
-    return expenses.filter(expense => {
+    let baseExpenses = expenses.filter(expense => {
       if (dateFilter === 'today' && expense.date !== today) return false;
       if (dateFilter === '7d' && expense.date < getDaysAgo(7)) return false;
       if (dateFilter === '30d' && expense.date < getDaysAgo(30)) return false;
       if (categoryFilter !== 'all' && expense.category !== categoryFilter) return false;
       if (productFilter !== 'all' && !expense.productIds?.includes(productFilter)) return false;
-      
-      const q = searchQuery.toLowerCase().trim();
-      if (q) {
-        const matchName = expense.name.toLowerCase().includes(q);
-        const matchPlatform = expense.platform.toLowerCase().includes(q);
-        const matchProducts = expense.productNames?.some(p => p.toLowerCase().includes(q));
-        if (!matchName && !matchPlatform && !matchProducts) return false;
-      }
       return true;
     });
+
+    const q = searchQuery.trim();
+    if (!q) return baseExpenses;
+
+    // If we have a query, we search within the already filtered baseExpenses
+    const searchFuse = new Fuse(baseExpenses, {
+      keys: ['name', 'platform', 'productNames'],
+      threshold: 0.3,
+      distance: 100,
+      minMatchCharLength: 2,
+    });
+
+    return searchFuse.search(q).map(result => result.item);
   }, [expenses, dateFilter, categoryFilter, productFilter, searchQuery]);
 
   const total = useMemo(() => 

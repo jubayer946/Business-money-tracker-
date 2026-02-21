@@ -11,6 +11,7 @@ import {
   Check, 
   LucideIcon
 } from 'lucide-react';
+import Fuse from 'fuse.js';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 type DateRange = 'all' | 'today' | '7d' | '30d';
@@ -67,8 +68,6 @@ export const SalesView: React.FC<SalesViewProps> = ({
   const [selectedStatus, setSelectedStatus] = useState<SaleStatus | 'All'>('All');
   const [showExportSuccess, setShowExportSuccess] = useState(false);
 
-  const q = searchQuery.trim().toLowerCase();
-
   const filteredAndSortedSales = useMemo(() => {
     const now = new Date();
     const todayStr = getLocalDateString(now);
@@ -76,31 +75,33 @@ export const SalesView: React.FC<SalesViewProps> = ({
     const sevenDaysAgoStr = getLocalDateString(new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000));
     const thirtyDaysAgoStr = getLocalDateString(new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000));
 
-    return sales.filter((s) => {
+    let baseSales = sales.filter((s) => {
       if (selectedRange === 'today' && s.date !== todayStr) return false;
       if (selectedRange === '7d' && s.date < sevenDaysAgoStr) return false;
       if (selectedRange === '30d' && s.date < thirtyDaysAgoStr) return false;
 
       if (selectedStatus !== 'All' && s.status !== selectedStatus) return false;
-
-      if (!q) return true;
-
-      const inProduct = s.productName?.toLowerCase().includes(q) ?? false;
-      const inVariant = s.variantName?.toLowerCase().includes(q) ?? false;
-      const inDate = s.date.toLowerCase().includes(q);
-
-      const inItemsDetail =
-        s.itemsDetail?.some((item) => {
-          const inItemProduct = item.productName.toLowerCase().includes(q);
-          const inItemVariant = item.variantName
-            ? item.variantName.toLowerCase().includes(q)
-            : false;
-          return inItemProduct || inItemVariant;
-        }) ?? false;
-
-      return inProduct || inVariant || inDate || inItemsDetail;
+      return true;
     });
-  }, [sales, q, selectedRange, selectedStatus]);
+
+    const q = searchQuery.trim();
+    if (!q) return baseSales;
+
+    const searchFuse = new Fuse(baseSales, {
+      keys: [
+        'productName',
+        'variantName',
+        'date',
+        'itemsDetail.productName',
+        'itemsDetail.variantName'
+      ],
+      threshold: 0.3,
+      distance: 100,
+      minMatchCharLength: 2,
+    });
+
+    return searchFuse.search(q).map(result => result.item);
+  }, [sales, searchQuery, selectedRange, selectedStatus]);
 
   const metrics = useMemo(() => {
     const totalRevenue = filteredAndSortedSales.reduce((sum, s) => sum + s.amount, 0);

@@ -6,6 +6,7 @@ import { Product, Sale, AdCost } from '../types';
 import { getProductStock, getStatusFromStock, generateCSV, downloadCSV, generateFilename } from '../utils';
 import { Hash, Package, AlertTriangle, AlertCircle, DollarSign, Download, CheckCircle2, LucideIcon } from 'lucide-react';
 import { VirtualProductList } from '../components/VirtualProductList';
+import Fuse from 'fuse.js';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
 
@@ -57,16 +58,22 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
 }) => {
   const [showExportSuccess, setShowExportSuccess] = useState(false);
 
-  const filteredProducts = useMemo(() => {
-    const normalizedQuery = searchQuery.trim().toLowerCase();
-    return products.filter((p) => {
-      const inName = p.name.toLowerCase().includes(normalizedQuery);
-      const inVariants = p.hasVariants && p.variants
-        ? p.variants.some((v) => v.name.toLowerCase().includes(normalizedQuery))
-        : false;
-      return !normalizedQuery || inName || inVariants;
+  const fuse = useMemo(() => {
+    return new Fuse(products, {
+      keys: ['name', 'variants.name'],
+      threshold: 0.3,
+      distance: 100,
+      minMatchCharLength: 2,
     });
-  }, [products, searchQuery]);
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    const normalizedQuery = searchQuery.trim();
+    if (!normalizedQuery) return products;
+
+    const results = fuse.search(normalizedQuery);
+    return results.map(result => result.item);
+  }, [products, searchQuery, fuse]);
 
   const metrics = useMemo(() => {
     let totalUnits = 0;
