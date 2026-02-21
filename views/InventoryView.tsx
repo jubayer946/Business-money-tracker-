@@ -38,6 +38,15 @@ const T = {
     profit: 'Potential Profit',
     margin: 'Avg Margin %',
     export: 'Export CSV'
+  },
+  empty: {
+    noProductsTitle: 'No products yet',
+    noProductsDescription:
+      'Add your first product to start tracking your inventory and performance.',
+    noMatchTitle: 'No matching products',
+    noMatchDescription:
+      'No products match your search or filters. Try clearing them.',
+    clearFilters: 'Clear filters'
   }
 };
 
@@ -75,6 +84,14 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   const [sortOption, setSortOption] = useState<SortOption>('name-asc');
   const [analysisPeriod, setAnalysisPeriod] = useState<AnalysisPeriod>('30d');
   const exportToastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const hasProducts = products.length > 0;
+
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setStockFilter('all');
+    setSortOption('name-asc');
+  };
 
   useEffect(() => {
     return () => {
@@ -410,32 +427,61 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
           {T.stockTip}
         </div>
         
-        {sortedProducts.length > 0 ? (
-          <VirtualProductList 
-            products={sortedProducts}
-            renderProduct={(p) => (
-              <SwipeableProductItem 
-                key={p.id} 
-                product={p} 
-                sales={sales}
-                adCosts={adCosts}
-                analysisPeriod={analysisPeriod}
-                expanded={expandedProductId === p.id}
-                onExpand={setExpandedProductId}
-                onEdit={onEdit}
-                onDelete={onDelete}
-              />
-            )}
-            itemHeight={90}
-          />
+        {hasProducts ? (
+          // Case 2: Products exist, but filters/search show none
+          sortedProducts.length > 0 ? (
+            <VirtualProductList 
+              products={sortedProducts}
+              renderProduct={(p) => (
+                <SwipeableProductItem 
+                  key={p.id} 
+                  product={p} 
+                  sales={sales}
+                  adCosts={adCosts}
+                  analysisPeriod={analysisPeriod}
+                  expanded={expandedProductId === p.id}
+                  onExpand={setExpandedProductId}
+                  onEdit={onEdit}
+                  onDelete={onDelete}
+                />
+              )}
+              itemHeight={90}
+            />
+          ) : (
+            <div className="py-16 flex flex-col items-center text-center px-6 animate-in fade-in zoom-in-95 duration-300">
+              <div className="w-16 h-16 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-600 shadow-sm mb-4">
+                <Package size={28} />
+              </div>
+              <p className="text-base font-bold text-slate-900 dark:text-white mb-1">
+                {T.empty.noMatchTitle}
+              </p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-[220px] leading-relaxed">
+                {T.empty.noMatchDescription}
+              </p>
+              {searchQuery && (
+                <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500 max-w-[220px] truncate">
+                  Search: “{searchQuery}”
+                </p>
+              )}
+              <button
+                onClick={handleClearFilters}
+                className="mt-4 px-4 py-1.5 rounded-full bg-indigo-600 text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform"
+              >
+                {T.empty.clearFilters}
+              </button>
+            </div>
+          )
         ) : (
+          // Case 1: No products at all
           <div className="py-16 flex flex-col items-center text-center px-6 animate-in fade-in zoom-in-95 duration-300">
             <div className="w-16 h-16 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-600 shadow-sm mb-4">
               <Package size={28} />
             </div>
-            <p className="text-base font-bold text-slate-900 dark:text-white mb-1">{T.noItems}</p>
-            <p className="text-xs text-slate-400 dark:text-slate-500 max-w-[200px] leading-relaxed">
-              No products match these filters. Try changing your selection.
+            <p className="text-base font-bold text-slate-900 dark:text-white mb-1">
+              {T.empty.noProductsTitle}
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 max-w-[220px] leading-relaxed">
+              {T.empty.noProductsDescription}
             </p>
           </div>
         )}
