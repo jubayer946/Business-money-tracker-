@@ -25,6 +25,17 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
   const stock = getProductStock(product);
   const status = getStatusFromStock(stock);
 
+  const price = product.price ?? 0;
+  const costPrice = product.costPrice ?? null;
+
+  const marginPerUnit =
+    costPrice != null ? price - costPrice : null;
+
+  const marginPct =
+    marginPerUnit != null && price > 0
+      ? (marginPerUnit / price) * 100
+      : null;
+
   return (
     <SwipeableCard 
       onEdit={() => onEdit(product)} 
@@ -41,11 +52,24 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
               {product.hasVariants ? <Layers size={24} /> : <Package size={24} />}
             </div>
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white leading-tight truncate">{product.name}</h4>
+              <h4 className="text-sm font-bold text-gray-900 dark:text-white leading-tight truncate">
+                {product.name}
+              </h4>
               <div className="flex items-center space-x-2">
-                <p className="text-xs text-indigo-600 dark:text-indigo-400 font-black">${product.price.toFixed(2)}</p>
+                <div className="flex flex-col">
+                  <p className="text-xs text-indigo-600 dark:text-indigo-400 font-black">
+                    ${price.toFixed(2)}
+                  </p>
+                  {marginPct != null && (
+                    <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      {marginPct.toFixed(1)}% margin
+                    </p>
+                  )}
+                </div>
                 {product.hasVariants && (
-                  <span className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">Variants</span>
+                  <span className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                    Variants
+                  </span>
                 )}
               </div>
             </div>
@@ -58,7 +82,16 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
           {expanded && (
             <div className="border-t border-gray-50 dark:border-slate-800 pt-4 mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Cost Price: ${product.costPrice?.toFixed(2) ?? '0.00'}</span>
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                    Cost Price: ${costPrice != null ? costPrice.toFixed(2) : '0.00'}
+                  </span>
+                  {marginPerUnit != null && marginPct != null && (
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      Margin per unit: ${marginPerUnit.toFixed(2)} ({marginPct.toFixed(1)}%)
+                    </span>
+                  )}
+                </div>
                 <div className="flex gap-2">
                   <button 
                     onClick={(e) => { e.stopPropagation(); onEdit(product); }} 
@@ -73,12 +106,45 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
                 <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3 space-y-2">
                   <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Variant Breakdown</p>
                   <div className="grid grid-cols-2 gap-2">
-                    {product.variants.map((v) => (
-                      <div key={v.id} className="flex items-center justify-between bg-white dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-700">
-                        <span className="text-xs font-bold text-slate-600 dark:text-slate-300">{v.name}</span>
-                        <span className={`text-[10px] font-black ${v.stock <= 5 ? 'text-red-500' : 'text-slate-900 dark:text-white'}`}>{v.stock}</span>
-                      </div>
-                    ))}
+                    {product.variants.map((v) => {
+                      // Total profit for this variant = margin per unit * its stock
+                      const variantProfit =
+                        marginPerUnit != null ? marginPerUnit * v.stock : null;
+
+                      return (
+                        <div
+                          key={v.id}
+                          className="flex items-center justify-between bg-white dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-700"
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                              {v.name}
+                            </span>
+                            {variantProfit != null && (
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                                ${variantProfit.toFixed(2)} profit
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <span
+                              className={`text-[10px] font-black ${
+                                v.stock <= 5
+                                  ? 'text-red-500'
+                                  : 'text-slate-900 dark:text-white'
+                              }`}
+                            >
+                              {v.stock}
+                            </span>
+                            {marginPct != null && (
+                              <span className="block text-[9px] text-slate-400 dark:text-slate-500">
+                                {marginPct.toFixed(1)}%
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
