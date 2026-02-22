@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { MobileHeader } from '../components/MobileHeader';
+import { MobileHeader, type ThemeMode } from '../components/MobileHeader';
 import { AdCampaign, Sale } from '../types';
 import { 
   Megaphone, 
@@ -12,7 +12,6 @@ import {
 } from 'lucide-react';
 import { getLocalDateString } from '../utils';
 
-type ThemeMode = 'light' | 'dark' | 'auto';
 type DateRange = 'all' | 'today' | '7d' | '30d' | 'month';
 
 const T = {

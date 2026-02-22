@@ -36,88 +36,123 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
       ? (marginPerUnit / price) * 100
       : null;
 
+  const inventoryValue = stock * price;
+  const isOut = status === 'Out of Stock';
+  const isLow = status === 'Low Stock';
+
   return (
     <SwipeableCard 
       onEdit={() => onEdit(product)} 
       onDelete={() => onDelete(product)}
-      className="mb-4"
+      className="mb-1"
     >
       {(isSwiping) => (
-        <div 
+        <div
           onClick={() => !isSwiping && onExpand(expanded ? null : product.id)}
-          className="p-5 flex flex-col cursor-pointer active:bg-slate-50 dark:active:bg-slate-800 transition-colors"
+          className="px-3 py-2.5 flex flex-col cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/60 active:bg-slate-50 dark:active:bg-slate-800 transition-colors rounded-xl"
         >
-          <div className="flex items-center">
-            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mr-4 ${status === 'In Stock' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-              {product.hasVariants ? <Layers size={24} /> : <Package size={24} />}
+          {/* Collapsed analytical row */}
+          <div className="flex items-start gap-3">
+            {/* Small icon */}
+            <div className="mt-0.5 w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+              {product.hasVariants ? <Layers size={16} /> : <Package size={16} />}
             </div>
+
             <div className="flex-1 min-w-0">
-              <h4 className="text-sm font-bold text-gray-900 dark:text-white leading-tight truncate">
-                {product.name}
-              </h4>
-              <div className="flex items-center space-x-2">
-                <div className="flex flex-col">
-                  <p className="text-xs text-indigo-600 dark:text-indigo-400 font-black">
+              {/* First line: Name + Stock + Chevron */}
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate mr-2">
+                  {product.name}
+                </h4>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[11px] font-medium text-slate-700 dark:text-slate-200">
+                    {stock} units
+                  </span>
+                  <div
+                    className={`text-gray-300 transition-transform duration-300 ${
+                      expanded ? 'rotate-180' : ''
+                    }`}
+                  >
+                    <ChevronDown size={14} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Second line: Price, Margin, Value, Status */}
+              <div className="mt-0.5 flex items-center justify-between text-[11px]">
+                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                  <span>
                     ${price.toFixed(2)}
-                  </p>
+                  </span>
                   {marginPct != null && (
-                    <p className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-emerald-600 dark:text-emerald-400">
                       {marginPct.toFixed(1)}% margin
-                    </p>
+                    </span>
+                  )}
+                  <span>
+                    Value: ${inventoryValue.toFixed(2)}
+                  </span>
+                  {product.hasVariants && (
+                    <span className="uppercase tracking-wide text-[10px]">
+                      Variants
+                    </span>
                   )}
                 </div>
-                {product.hasVariants && (
-                  <span className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
-                    Variants
-                  </span>
-                )}
+                <span
+                  className={`ml-3 shrink-0 text-[10px] font-semibold ${
+                    isOut
+                      ? 'text-red-500'
+                      : isLow
+                      ? 'text-amber-500'
+                      : 'text-emerald-500'
+                  }`}
+                >
+                  {status}
+                </span>
               </div>
-            </div>
-            <div className="flex flex-col items-end">
-              <span className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-tighter ${status === 'In Stock' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{stock} Qty</span>
-              <div className={`mt-1 text-gray-300 transition-transform duration-300 ${expanded ? 'rotate-180' : ''}`}><ChevronDown size={14} /></div>
             </div>
           </div>
 
+          {/* Expanded details */}
           {expanded && (
-            <div className="border-t border-gray-50 dark:border-slate-800 pt-4 mt-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="border-t border-slate-100 dark:border-slate-800 pt-3 mt-3 space-y-3">
               <div className="flex justify-between items-center">
                 <div className="flex flex-col">
-                  <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
-                    Cost Price: ${costPrice != null ? costPrice.toFixed(2) : '0.00'}
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                    Cost: ${costPrice != null ? costPrice.toFixed(2) : '0.00'}
                   </span>
                   {marginPerUnit != null && marginPct != null && (
-                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
                       Margin per unit: ${marginPerUnit.toFixed(2)} ({marginPct.toFixed(1)}%)
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); onEdit(product); }} 
-                    className="text-indigo-600 dark:text-indigo-400 text-[10px] font-black uppercase"
-                  >
-                    Edit
-                  </button>
-                </div>
+                <button 
+                  onClick={(e) => { e.stopPropagation(); onEdit(product); }} 
+                  className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase"
+                >
+                  Edit
+                </button>
               </div>
 
               {product.hasVariants && product.variants && product.variants.length > 0 && (
-                <div className="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-3 space-y-2">
-                  <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest mb-1">Variant Breakdown</p>
+                <div className="rounded-xl border border-slate-100 dark:border-slate-800 p-3 space-y-2">
+                  <p className="text-[9px] font-semibold uppercase text-slate-400 tracking-wide">
+                    Variant breakdown
+                  </p>
                   <div className="grid grid-cols-2 gap-2">
                     {product.variants.map((v) => {
-                      // Total profit for this variant = margin per unit * its stock
                       const variantProfit =
                         marginPerUnit != null ? marginPerUnit * v.stock : null;
+                      const isVariantLow = v.stock <= 5;
 
                       return (
                         <div
                           key={v.id}
-                          className="flex items-center justify-between bg-white dark:bg-slate-800 px-3 py-2 rounded-xl border border-slate-100 dark:border-slate-700"
+                          className="flex items-center justify-between rounded-lg px-2.5 py-2 bg-white/70 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-700"
                         >
                           <div className="flex flex-col">
-                            <span className="text-xs font-bold text-slate-600 dark:text-slate-300">
+                            <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
                               {v.name}
                             </span>
                             {variantProfit != null && (
@@ -126,22 +161,15 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
                               </span>
                             )}
                           </div>
-                          <div className="text-right">
-                            <span
-                              className={`text-[10px] font-black ${
-                                v.stock <= 5
-                                  ? 'text-red-500'
-                                  : 'text-slate-900 dark:text-white'
-                              }`}
-                            >
-                              {v.stock}
-                            </span>
-                            {marginPct != null && (
-                              <span className="block text-[9px] text-slate-400 dark:text-slate-500">
-                                {marginPct.toFixed(1)}%
-                              </span>
-                            )}
-                          </div>
+                          <span
+                            className={`text-[10px] font-semibold ${
+                              isVariantLow
+                                ? 'text-red-500'
+                                : 'text-slate-900 dark:text-white'
+                            }`}
+                          >
+                            {v.stock}
+                          </span>
                         </div>
                       );
                     })}

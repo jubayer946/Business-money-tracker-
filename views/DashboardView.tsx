@@ -14,14 +14,13 @@ import {
   Target,
   History
 } from 'lucide-react';
-import { MobileHeader } from '../components/MobileHeader';
+import { MobileHeader, type ThemeMode } from '../components/MobileHeader';
 import { StatCard } from '../components/StatCard';
 import { Product, Sale, Expense, BusinessStats, AuditLogEntry } from '../types';
 import { getProductStock, getStatusFromStock, getLocalDateString } from '../utils';
 import { formatCurrency, formatPercent } from '../utils/formatters';
 import { ProductExpenseSummary } from '../components/ProductExpenseSummary';
 
-type ThemeMode = 'light' | 'dark' | 'auto';
 type PeriodType = 'today' | '7d' | '30d';
 
 const T = {
@@ -154,6 +153,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
     return { data, max: maxRevenue };
   }, [sales, selectedPeriod]);
 
+  const todaySubtitle = useMemo(() => {
+    return new Date().toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: '2-digit' 
+    });
+  }, []);
+
   return (
     <div className="pb-32 bg-[#FBFBFE] dark:bg-[#0F172A] min-h-screen">
       <MobileHeader 
@@ -163,6 +170,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         searchQuery=""
         setSearchQuery={() => {}}
         onActivityClick={onActivityClick}
+        subtitle={todaySubtitle}
       />
 
       <div className="max-w-5xl mx-auto px-5 mt-6 space-y-6">

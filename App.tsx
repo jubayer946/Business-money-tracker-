@@ -35,6 +35,7 @@ import { RateLimitIndicator } from './components/RateLimitIndicator';
 import { useAuditLog } from './hooks/useAuditLog';
 import { AccessibleModal } from './components/AccessibleModal';
 import { ActivityFeed } from './components/ActivityFeed';
+import type { ThemeMode } from './components/MobileHeader';
 
 import {
   LayoutDashboard,
@@ -45,8 +46,6 @@ import {
   DollarSign,
   History,
 } from 'lucide-react';
-
-type ThemeMode = 'light' | 'dark' | 'auto';
 
 const normalizeProduct = (id: string, data: any): Product => ({
   id,

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { MobileHeader } from '../components/MobileHeader';
+import { MobileHeader, type ThemeMode } from '../components/MobileHeader';
 import { AdCost, Sale } from '../types';
 import { AdCostItem } from '../components/AdCostItem';
 import { 
@@ -15,7 +15,6 @@ import {
 } from 'lucide-react';
 import { getLocalDateString, generateCSV, downloadCSV, generateFilename } from '../utils';
 
-type ThemeMode = 'light' | 'dark' | 'auto';
 type DateRange = 'all' | 'today' | '7d' | '30d' | 'month';
 
 const T = {

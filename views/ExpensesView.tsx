@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Receipt, Filter, Plus, Upload, ChevronDown, Package, Settings } from 'lucide-react';
-import { MobileHeader } from '../components/MobileHeader';
+import { MobileHeader, type ThemeMode } from '../components/MobileHeader';
 import { CSVImport } from '../components/CSVImport';
 import { CategorySelector } from '../components/CategorySelector';
 import { CategoryManager } from '../components/CategoryManager';
@@ -9,7 +9,6 @@ import { Expense, Product, AdPlatform } from '../types';
 import { formatCurrency, getDaysAgo, getLocalDateString } from '../utils';
 import Fuse from 'fuse.js';
 
-type ThemeMode = 'light' | 'dark' | 'auto';
 type DateFilter = 'all' | 'today' | '7d' | '30d';
 
 interface ExpensesViewProps {

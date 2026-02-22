@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { MobileHeader } from '../components/MobileHeader';
+import { MobileHeader, type ThemeMode } from '../components/MobileHeader';
 import { SaleItem } from '../components/SaleItem';
 import { Sale, SaleStatus } from '../types';
 import { getLocalDateString, generateCSV, downloadCSV, generateFilename } from '../utils';
@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import Fuse from 'fuse.js';
 
-type ThemeMode = 'light' | 'dark' | 'auto';
 type DateRange = 'all' | 'today' | '7d' | '30d';
 
 const T = {

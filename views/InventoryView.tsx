@@ -1,6 +1,6 @@
 
 import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { MobileHeader } from '../components/MobileHeader';
+import { MobileHeader, type ThemeMode } from '../components/MobileHeader';
 import { SwipeableProductItem } from '../components/SwipeableProductItem';
 import { Product, Sale, AdCost } from '../types';
 import { getProductStock, getStatusFromStock, generateCSV, downloadCSV, generateFilename } from '../utils';
@@ -8,7 +8,6 @@ import { Hash, Package, AlertTriangle, AlertCircle, DollarSign, Download, CheckC
 import { VirtualProductList } from '../components/VirtualProductList';
 import Fuse from 'fuse.js';
 
-type ThemeMode = 'light' | 'dark' | 'auto';
 type StockFilter = 'all' | 'in' | 'low' | 'out';
 
 type SortOption =
@@ -287,145 +286,122 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
         </div>
       )}
 
-      <div className="max-w-5xl mx-auto px-5 mt-4 space-y-5">
-        <div className="flex items-center space-x-3 hide-scrollbar px-1 overflow-x-auto pb-1">
-          <SummaryChip 
-            label={T.summary.skus} 
-            value={metrics.skus} 
-            icon={Hash} 
-            color="text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20" 
+      <div className="max-w-5xl mx-auto px-5 mt-4 space-y-4">
+        {/* NEW: dashboard-style stats grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <DashboardStatCard
+            label="Inventory value"
+            value={`$${metrics.value.toLocaleString()}`}
+            description="At selling price"
           />
-          <SummaryChip 
-            label={T.summary.units} 
-            value={metrics.units} 
-            icon={Package} 
-            color="text-indigo-600 bg-indigo-50 dark:bg-indigo-900/20" 
+          <DashboardStatCard
+            label="Total units"
+            value={metrics.units.toLocaleString()}
+            description={`${metrics.skus} SKUs`}
           />
-          <SummaryChip 
-            label={T.summary.low} 
-            value={metrics.low} 
-            icon={AlertTriangle} 
-            color="text-amber-600 bg-amber-50 dark:bg-amber-900/20" 
+          <DashboardStatCard
+            label="Low stock"
+            value={metrics.low.toString()}
+            description="Items needing restock"
           />
-          <SummaryChip 
-            label={T.summary.out} 
-            value={metrics.out} 
-            icon={AlertCircle} 
-            color="text-red-600 bg-red-50 dark:bg-red-900/20" 
+          <DashboardStatCard
+            label="Out of stock"
+            value={metrics.out.toString()}
+            description="Items unavailable"
           />
-          <SummaryChip 
-            label={T.summary.value} 
-            value={`$${metrics.value.toLocaleString()}`} 
-            icon={DollarSign} 
-            color="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" 
-          />
-          <SummaryChip 
-            label={T.summary.cost} 
-            value={`$${metrics.cost.toLocaleString()}`} 
-            icon={DollarSign} 
-            color="text-sky-600 bg-sky-50 dark:bg-sky-900/20" 
-          />
-          <SummaryChip 
-            label={T.summary.profit} 
-            value={`$${metrics.profit.toLocaleString()}`} 
-            icon={TrendingUp} 
-            color="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20" 
-          />
-          <SummaryChip 
-            label={T.summary.margin} 
-            value={`${metrics.marginPct.toFixed(1)}%`} 
-            icon={Percent} 
-            color="text-violet-600 bg-violet-50 dark:bg-violet-900/20" 
-          />
-          
+        </div>
+
+        {/* Export button row */}
+        <div className="flex justify-end">
           <button
             onClick={handleExportCSV}
             disabled={sortedProducts.length === 0}
-            className="flex flex-col min-w-[110px] bg-white dark:bg-slate-900 border border-indigo-100 dark:border-indigo-900/30 p-3 rounded-2xl shadow-sm transition-all active:scale-95 disabled:opacity-40 group shrink-0"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-indigo-600 text-white text-xs font-semibold shadow-sm active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-transform"
           >
-            <div className="flex items-center space-x-1.5 mb-1.5">
-              <div className="p-1 rounded-lg bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 group-active:scale-90 transition-transform">
-                <Download size={12} strokeWidth={2.5} />
-              </div>
-              <span className="text-[9px] font-black uppercase text-indigo-400 dark:text-indigo-500 tracking-wider">
-                Action
-              </span>
-            </div>
-            <p className="text-xs font-black text-indigo-600 dark:text-indigo-400 truncate">
-              {T.summary.export}
-            </p>
+            <Download size={14} />
+            <span>Export CSV</span>
           </button>
         </div>
 
-        {/* Stock filter buttons */}
-        <div className="flex space-x-2 hide-scrollbar px-1 overflow-x-auto">
-          {[
-            { key: 'all', label: 'All' },
-            { key: 'in',  label: 'In Stock' },
-            { key: 'low', label: 'Low Stock' },
-            { key: 'out', label: 'Out of Stock' },
-          ].map(option => (
-            <button
-              key={option.key}
-              onClick={() => setStockFilter(option.key as StockFilter)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors whitespace-nowrap
-                ${
-                  stockFilter === option.key
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                }`}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Sort control */}
-        <div className="flex items-center justify-between px-1 mt-2">
-          <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.2em]">
-            Sort
-          </span>
-          <select
-            value={sortOption}
-            onChange={(e) => setSortOption(e.target.value as SortOption)}
-            className="text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-2 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="name-asc">Name (A–Z)</option>
-            <option value="name-desc">Name (Z–A)</option>
-            <option value="stock-desc">Stock (High → Low)</option>
-            <option value="stock-asc">Stock (Low → High)</option>
-            <option value="value-desc">Value (High → Low)</option>
-            <option value="value-asc">Value (Low → High)</option>
-          </select>
-        </div>
-
-        {/* Analysis period selector */}
-        <div className="flex items-center justify-between px-1 mt-2">
-          <span className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-[0.2em]">
-            Period
-          </span>
-          <div className="flex space-x-1">
-            {(['7d', '30d', '90d'] as AnalysisPeriod[]).map(period => (
+      {/* Filter + Sort toolbar */}
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 px-3 py-3 space-y-2">
+        <div className="flex items-start justify-between gap-2">
+          {/* Stock filters */}
+          <div className="flex flex-wrap gap-1.5">
+            {[
+              { key: 'all', label: 'All' },
+              { key: 'in',  label: 'In Stock' },
+              { key: 'low', label: 'Low Stock' },
+              { key: 'out', label: 'Out of Stock' },
+            ].map(option => (
               <button
-                key={period}
-                onClick={() => setAnalysisPeriod(period)}
-                className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border transition-colors
+                key={option.key}
+                onClick={() => setStockFilter(option.key as StockFilter)}
+                className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors
                   ${
-                    analysisPeriod === period
+                    stockFilter === option.key
                       ? 'bg-indigo-600 text-white border-indigo-600'
                       : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
                   }`}
               >
-                {period.toUpperCase()}
+                {option.label}
               </button>
             ))}
           </div>
+
+          {/* Sort control */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[10px] font-semibold uppercase text-slate-400 dark:text-slate-500 tracking-[0.15em]">
+              Sort
+            </span>
+            <select
+              value={sortOption}
+              onChange={(e) => setSortOption(e.target.value as SortOption)}
+              className="text-[11px] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full px-2.5 py-1 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+            >
+              <option value="name-asc">Name (A–Z)</option>
+              <option value="name-desc">Name (Z–A)</option>
+              <option value="stock-desc">Stock (High → Low)</option>
+              <option value="stock-asc">Stock (Low → High)</option>
+              <option value="value-desc">Value (High → Low)</option>
+              <option value="value-asc">Value (Low → High)</option>
+            </select>
+          </div>
         </div>
 
-        <div className="mb-4 text-[10px] font-black uppercase text-indigo-400 dark:text-indigo-500 tracking-[0.2em] flex items-center px-1">
-          <span className="bg-indigo-100 dark:bg-indigo-900/40 px-2 py-0.5 rounded mr-2">{T.tip}</span>
-          {T.stockTip}
+        <div className="flex items-center justify-between gap-4">
+          {/* Tip line inside the toolbar */}
+          <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+            <span className="px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-[9px] font-semibold uppercase text-indigo-500 dark:text-indigo-300 tracking-[0.15em]">
+              {T.tip}
+            </span>
+            <span>{T.stockTip}</span>
+          </div>
+
+          {/* Analysis period selector */}
+          <div className="flex items-center gap-1.5 shrink-0">
+            <span className="text-[10px] font-semibold uppercase text-slate-400 dark:text-slate-500 tracking-[0.1em]">
+              Period
+            </span>
+            <div className="flex bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg">
+              {(['7d', '30d', '90d'] as AnalysisPeriod[]).map(period => (
+                <button
+                  key={period}
+                  onClick={() => setAnalysisPeriod(period)}
+                  className={`px-2 py-0.5 rounded-md text-[9px] font-bold transition-all
+                    ${
+                      analysisPeriod === period
+                        ? 'bg-white dark:bg-slate-700 text-indigo-600 dark:text-white shadow-sm'
+                        : 'text-slate-400 dark:text-slate-500'
+                    }`}
+                >
+                  {period.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
+      </div>
         
         {hasProducts ? (
           // Case 2: Products exist, but filters/search show none
@@ -490,25 +466,28 @@ export const InventoryView: React.FC<InventoryViewProps> = ({
   );
 };
 
-interface SummaryChipProps {
+interface DashboardStatCardProps {
   label: string;
-  value: string | number;
-  icon: LucideIcon;
-  color: string;
+  value: string;
+  description?: string;
 }
 
-const SummaryChip: React.FC<SummaryChipProps> = ({ label, value, icon: Icon, color }) => (
-  <div className="flex flex-col min-w-[110px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl shadow-sm transition-colors shrink-0">
-    <div className="flex items-center space-x-1.5 mb-1.5">
-      <div className={`p-1 rounded-lg ${color}`}>
-        <Icon size={12} strokeWidth={2.5} />
-      </div>
-      <span className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
-        {label}
-      </span>
-    </div>
-    <p className="text-xs font-black text-slate-900 dark:text-slate-50 truncate">
+const DashboardStatCard: React.FC<DashboardStatCardProps> = ({
+  label,
+  value,
+  description,
+}) => (
+  <div className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 px-3.5 py-3 flex flex-col justify-between">
+    <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
+      {label}
+    </span>
+    <span className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
       {value}
-    </p>
+    </span>
+    {description && (
+      <span className="mt-0.5 text-[11px] text-slate-400 dark:text-slate-500">
+        {description}
+      </span>
+    )}
   </div>
 );
