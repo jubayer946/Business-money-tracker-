@@ -7,14 +7,12 @@ interface MobileHeaderProps {
   title: string;
   showSearch?: boolean;
   placeholder?: string;
-  // Optional search props (safe defaults inside)
+  // Optional search props
   searchQuery?: string;
   setSearchQuery?: (query: string) => void;
   theme: ThemeMode;
   setTheme: (t: ThemeMode) => void;
   onActivityClick?: () => void;
-  // Text shown next to the green dot (e.g. date on dashboard)
-  subtitle?: string;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
@@ -26,7 +24,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   theme,
   setTheme,
   onActivityClick,
-  subtitle,
 }) => {
   const toggleTheme = () => {
     const next: Record<ThemeMode, ThemeMode> = {
@@ -34,8 +31,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
       dark: 'auto',
       auto: 'light',
     };
-    const newTheme = next[theme];
-    setTheme(newTheme);
+    setTheme(next[theme]);
   };
 
   const ThemeIcon = ({ light: Sun, dark: Moon, auto: Monitor } as const)[theme];
@@ -43,70 +39,78 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   const safeQuery = searchQuery ?? '';
   const safeSetSearchQuery = setSearchQuery ?? (() => {});
 
+  // Date shown on every page, e.g. "22 Feb 26"
+  const todayStr = React.useMemo(() => {
+    const d = new Date();
+    return d
+      .toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: '2-digit',
+      })
+      .replace(',', '');
+  }, []);
+
   return (
-    <div className="sticky top-0 z-[100] bg-white/70 dark:bg-slate-950/70 backdrop-blur-md border-b border-slate-100 dark:border-slate-800 transition-colors duration-300">
-      {/* Top Safe Area Spacing for notches/status bar */}
-      <div style={{ height: 'var(--safe-top)' }} />
-
-      <div className="px-5 pt-4 pb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div>
-            {/* Page title (e.g. 'Nobabighor' on dashboard) */}
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-              {title}
-            </h1>
-
-            {/* Green dot + optional subtitle (e.g. date) */}
-            <div className="flex items-center space-x-1.5 mt-0.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {subtitle && (
-                <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                  {subtitle}
+    <div className="sticky top-0 z-[100] pt-[var(--safe-top)] pb-2 bg-transparent">
+      <div className="px-4">
+        <div className="w-full rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200 dark:border-slate-800 px-4 py-3 shadow-sm">
+          {/* Top row: title + actions */}
+          <div className="flex items-center justify-between">
+            <div className="min-w-0">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white truncate">
+                {title}
+              </h1>
+              <div className="flex items-center space-x-1.5 mt-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span className="text-[11px] text-slate-400 dark:text-slate-500 truncate">
+                  {todayStr}
                 </span>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 ml-3">
+              {onActivityClick && (
+                <button
+                  aria-label="View activity log"
+                  onClick={onActivityClick}
+                  className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
+                >
+                  <History size={16} />
+                </button>
               )}
-            </div>
-          </div>
 
-          <div className="flex items-center space-x-2">
-            <button
-              aria-label="Toggle theme"
-              onClick={toggleTheme}
-              className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 active:scale-95 transition-transform"
-            >
-              <ThemeIcon size={18} />
-            </button>
-
-            {onActivityClick && (
               <button
-                aria-label="View activity log"
-                onClick={onActivityClick}
-                className="w-10 h-10 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-400 active:scale-95 transition-transform"
+                aria-label="Toggle theme"
+                onClick={toggleTheme}
+                className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300 active:scale-95 transition-transform"
               >
-                <History size={18} />
+                <ThemeIcon size={16} />
               </button>
-            )}
 
-            <div className="w-10 h-10 rounded-2xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-black text-xs shadow-inner">
-              NB
+              <div className="w-9 h-9 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 flex items-center justify-center font-black text-[11px] shadow-inner">
+                NB
+              </div>
             </div>
           </div>
-        </div>
 
-        {showSearch && (
-          <div className="relative mt-4 group">
-            <Search
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 dark:group-focus-within:text-white transition-colors"
-              size={16}
-            />
-            <input
-              type="text"
-              placeholder={placeholder}
-              value={safeQuery}
-              onChange={(e) => safeSetSearchQuery(e.target.value)}
-              className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl py-3 pl-11 pr-4 text-sm font-medium focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-700 dark:text-white outline-none transition-all"
-            />
-          </div>
-        )}
+          {/* Search inside pill (optional) */}
+          {showSearch && (
+            <div className="relative mt-3 group">
+              <Search
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-slate-900 dark:group-focus-within:text-white transition-colors"
+                size={16}
+              />
+              <input
+                type="text"
+                placeholder={placeholder}
+                value={safeQuery}
+                onChange={(e) => safeSetSearchQuery(e.target.value)}
+                className="w-full bg-slate-100 dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl py-2.5 pl-11 pr-4 text-sm font-medium focus:ring-1 focus:ring-slate-300 dark:focus:ring-slate-700 dark:text-white outline-none transition-all"
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
