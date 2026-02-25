@@ -7,8 +7,8 @@ import { SwipeableCard } from './SwipeableCard';
 interface SwipeableProductItemProps {
   product: Product;
   sales: Sale[];
-  adCosts: AdCost[];
-  analysisPeriod: '7d' | '30d' | '90d';
+  adCosts: AdCost[];              // this is your expenses array from App
+  analysisPeriod: '7d' | '30d' | '90d'; // we won't use this for margin anymore
   onEdit: (p: Product) => void;
   onDelete: (p: Product) => void;
   expanded: boolean;
@@ -17,6 +17,8 @@ interface SwipeableProductItemProps {
 
 export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({ 
   product, 
+  sales,
+  adCosts,
   onEdit, 
   onDelete, 
   expanded, 
@@ -26,15 +28,33 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
   const status = getStatusFromStock(stock);
 
   const price = product.price ?? 0;
-  const costPrice = product.costPrice ?? null;
+  const costPrice = product.costPrice ?? 0;
 
-  const marginPerUnit =
-    costPrice != null ? price - costPrice : null;
+  // 1) Total ad spend for this product (all time, no period)
+  const totalAdSpendForProduct = adCosts
+    .filter(exp => Array.isArray(exp.productIds) && exp.productIds.includes(product.id))
+    .reduce((sum, exp) => sum + (exp.amount ?? 0), 0);
 
-  const marginPct =
-    marginPerUnit != null && price > 0
-      ? (marginPerUnit / price) * 100
-      : null;
+  // 2) Total units sold for this product (all time)
+  const totalUnitsSoldForProduct = sales
+    .filter(sale => sale.productId === product.id)
+    .reduce((sum, sale) => sum + (sale.items ?? 0), 0);
+
+  // 3) Ad cost per unit (lifetime). If no sales yet, treat as 0.
+  const adCostPerUnit =
+    totalUnitsSoldForProduct > 0
+      ? totalAdSpendForProduct / totalUnitsSoldForProduct
+      : 0;
+
+  // 4) Gross margin (without ads)
+  const grossMarginPerUnit = price - costPrice;
+  const grossMarginPct =
+    price > 0 ? (grossMarginPerUnit / price) * 100 : 0;
+
+  // 5) Net margin after ads (what you care about)
+  const netMarginPerUnit = price - costPrice - adCostPerUnit;
+  const netMarginPct =
+    price > 0 ? (netMarginPerUnit / price) * 100 : 0;
 
   const inventoryValue = stock * price;
   const isOut = status === 'Out of Stock';
@@ -44,22 +64,20 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
     <SwipeableCard 
       onEdit={() => onEdit(product)} 
       onDelete={() => onDelete(product)}
-      className="mb-1"
+      className="mb-2"
     >
       {(isSwiping) => (
-        <div
+        <div 
           onClick={() => !isSwiping && onExpand(expanded ? null : product.id)}
-          className="px-3 py-2.5 flex flex-col cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/60 active:bg-slate-50 dark:active:bg-slate-800 transition-colors rounded-xl"
+          className="px-3 py-3 flex flex-col cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/60 active:bg-slate-50 dark:active:bg-slate-800 transition-colors rounded-xl"
         >
-          {/* Collapsed analytical row */}
+          {/* Top row: name + key stats */}
           <div className="flex items-start gap-3">
-            {/* Small icon */}
             <div className="mt-0.5 w-8 h-8 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
               {product.hasVariants ? <Layers size={16} /> : <Package size={16} />}
             </div>
 
             <div className="flex-1 min-w-0">
-              {/* First line: Name + Stock + Chevron */}
               <div className="flex items-center justify-between">
                 <h4 className="text-sm font-semibold text-slate-900 dark:text-white truncate mr-2">
                   {product.name}
@@ -78,20 +96,14 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
                 </div>
               </div>
 
-              {/* Second line: Price, Margin, Value, Status */}
               <div className="mt-0.5 flex items-center justify-between text-[11px]">
-                <div className="flex items-center gap-3 text-slate-500 dark:text-slate-400">
-                  <span>
-                    ${price.toFixed(2)}
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-slate-500 dark:text-slate-400">
+                  <span>${price.toFixed(2)}</span>
+                  <span>Gross: {grossMarginPct.toFixed(1)}%</span>
+                  <span className="text-emerald-600 dark:text-emerald-400">
+                    After ads: {netMarginPct.toFixed(1)}%
                   </span>
-                  {marginPct != null && (
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      {marginPct.toFixed(1)}% margin
-                    </span>
-                  )}
-                  <span>
-                    Value: ${inventoryValue.toFixed(2)}
-                  </span>
+                  <span>Value: ${inventoryValue.toFixed(2)}</span>
                   {product.hasVariants && (
                     <span className="uppercase tracking-wide text-[10px]">
                       Variants
@@ -119,13 +131,17 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
               <div className="flex justify-between items-center">
                 <div className="flex flex-col">
                   <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
-                    Cost: ${costPrice != null ? costPrice.toFixed(2) : '0.00'}
+                    Cost price: ${costPrice.toFixed(2)}
                   </span>
-                  {marginPerUnit != null && marginPct != null && (
-                    <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                      Margin per unit: ${marginPerUnit.toFixed(2)} ({marginPct.toFixed(1)}%)
-                    </span>
-                  )}
+                  <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">
+                    Ad cost / unit: ${adCostPerUnit.toFixed(2)}
+                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Gross margin: ${grossMarginPerUnit.toFixed(2)} ({grossMarginPct.toFixed(1)}%)
+                  </span>
+                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                    Margin after ads: ${netMarginPerUnit.toFixed(2)} ({netMarginPct.toFixed(1)}%)
+                  </span>
                 </div>
                 <button 
                   onClick={(e) => { e.stopPropagation(); onEdit(product); }} 
@@ -142,9 +158,10 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
                   </p>
                   <div className="grid grid-cols-2 gap-2">
                     {product.variants.map((v) => {
-                      const variantProfit =
-                        marginPerUnit != null ? marginPerUnit * v.stock : null;
                       const isVariantLow = v.stock <= 5;
+                      // For variants, we reuse netMarginPerUnit as per-unit margin after ads
+                      const variantProfit =
+                        netMarginPerUnit * v.stock;
 
                       return (
                         <div
@@ -155,11 +172,9 @@ export const SwipeableProductItem: React.FC<SwipeableProductItemProps> = ({
                             <span className="text-xs font-medium text-slate-700 dark:text-slate-200">
                               {v.name}
                             </span>
-                            {variantProfit != null && (
-                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
-                                ${variantProfit.toFixed(2)} profit
-                              </span>
-                            )}
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400">
+                              ${variantProfit.toFixed(2)} profit (after ads)
+                            </span>
                           </div>
                           <span
                             className={`text-[10px] font-semibold ${

@@ -91,6 +91,7 @@ export interface AdCost {
   date: string;
   endDate?: string;
   notes?: string;
+  productIds?: string[];
 }
 
 // ==================== AD PLATFORM TYPES ====================
