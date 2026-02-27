@@ -4,7 +4,7 @@ import { MobileHeader, type ThemeMode } from '../components/MobileHeader';
 import { SwipeableProductItem } from '../components/SwipeableProductItem';
 import { Product, Sale, AdCost } from '../types';
 import { getProductStock, getStatusFromStock, generateCSV, downloadCSV, generateFilename } from '../utils';
-import { Hash, Package, AlertTriangle, AlertCircle, DollarSign, Download, CheckCircle2, LucideIcon, TrendingUp, Percent } from 'lucide-react';
+import { Package, Download, CheckCircle2 } from 'lucide-react';
 import { VirtualProductList } from '../components/VirtualProductList';
 import Fuse from 'fuse.js';
 

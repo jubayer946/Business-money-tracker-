@@ -1,7 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { 
-  TrendingUp, 
-  ShoppingCart, 
   AlertCircle, 
   ChevronRight, 
   DollarSign,
@@ -9,11 +7,11 @@ import {
   Percent,
   Zap,
   Truck,
-  LucideIcon,
   ArrowUpRight,
   Target,
   History
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { MobileHeader, type ThemeMode } from '../components/MobileHeader';
 import { StatCard } from '../components/StatCard';
 import { Product, Sale, Expense, BusinessStats, AuditLogEntry } from '../types';
