@@ -57,32 +57,42 @@ export const AdsView: React.FC<AdsViewProps> = ({
   const filteredAds = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const now = new Date();
-    const todayStr = getLocalDateString(now);
 
-    let periodStartStr = '';
-    let periodEndStr = todayStr;
+    // Define the date range as real Date objects
+    let periodStart: Date | null = null;
+    let periodEnd: Date | null = null;
 
-    if (selectedRange === '7d') {
-      const d = new Date();
-      d.setDate(now.getDate() - 7);
-      periodStartStr = getLocalDateString(d);
+    if (selectedRange === 'today') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      periodStart = start;
+      periodEnd = end;
+    } else if (selectedRange === '7d') {
+      const start = new Date(now);
+      start.setDate(now.getDate() - 6);
+      periodStart = start;
+      periodEnd = now;
     } else if (selectedRange === '30d') {
-      const d = new Date();
-      d.setDate(now.getDate() - 30);
-      periodStartStr = getLocalDateString(d);
+      const start = new Date(now);
+      start.setDate(now.getDate() - 29);
+      periodStart = start;
+      periodEnd = now;
     } else if (selectedRange === 'month') {
-      const d = new Date(now.getFullYear(), now.getMonth(), 1);
-      periodStartStr = getLocalDateString(d);
-    } else if (selectedRange === 'today') {
-      periodStartStr = todayStr;
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      periodStart = start;
+      periodEnd = now;
     }
+    // 'all' => periodStart/periodEnd stay null (no date filter)
 
     return ads.filter((ad) => {
       // Date filter
-      if (selectedRange !== 'all') {
-        const adStart = ad.date;
-        const adEnd = ad.endDate || ad.date;
-        const isInRange = adStart <= periodEndStr && adEnd >= periodStartStr;
+      if (selectedRange !== 'all' && periodStart && periodEnd) {
+        const adStartDate = new Date(ad.date);
+        const adEndDate = new Date(ad.endDate || ad.date);
+
+        const isInRange =
+          adStartDate <= periodEnd && adEndDate >= periodStart;
+
         if (!isInRange) return false;
       }
 
@@ -122,7 +132,10 @@ export const AdsView: React.FC<AdsViewProps> = ({
         <div className="grid grid-cols-2 gap-3">
           <SummaryCard 
             label="Selected Period" 
-            value={`$${totalSpend.toLocaleString()}`} 
+            value={`$${totalSpend.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}`} 
             icon={BarChart3} 
             color="text-indigo-500 bg-indigo-50 dark:bg-indigo-900/30" 
           />

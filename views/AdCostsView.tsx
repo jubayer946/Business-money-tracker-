@@ -10,7 +10,6 @@ import {
   Download, 
   Check, 
   CheckCircle2,
-  LucideIcon,
   ArrowUpDown 
 } from 'lucide-react';
 import { getLocalDateString, generateCSV, downloadCSV, generateFilename } from '../utils';
@@ -19,7 +18,7 @@ type DateRange = 'all' | 'today' | '7d' | '30d' | 'month';
 
 const T = {
   title: 'Business Expenses',
-  placeholder: 'Search platform, category or notes...',
+  placeholder: 'Search platform or notes...',
   platforms: 'Platforms',
   totalLabel: 'Total Business Investment',
   noAds: 'No expenses recorded yet.',
@@ -68,32 +67,42 @@ export const AdCostsView: React.FC<AdCostsViewProps> = ({
   const filteredAndSortedAdCosts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const now = new Date();
-    const todayStr = getLocalDateString(now);
 
-    let periodStartStr = '';
-    let periodEndStr = todayStr;
+    // Define the date range as real Date objects
+    let periodStart: Date | null = null;
+    let periodEnd: Date | null = null;
 
-    if (selectedRange === '7d') {
-      const d = new Date();
-      d.setDate(now.getDate() - 7);
-      periodStartStr = getLocalDateString(d);
+    if (selectedRange === 'today') {
+      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+      periodStart = start;
+      periodEnd = end;
+    } else if (selectedRange === '7d') {
+      const start = new Date(now);
+      start.setDate(now.getDate() - 6);
+      periodStart = start;
+      periodEnd = now;
     } else if (selectedRange === '30d') {
-      const d = new Date();
-      d.setDate(now.getDate() - 30);
-      periodStartStr = getLocalDateString(d);
+      const start = new Date(now);
+      start.setDate(now.getDate() - 29);
+      periodStart = start;
+      periodEnd = now;
     } else if (selectedRange === 'month') {
-      const d = new Date(now.getFullYear(), now.getMonth(), 1);
-      periodStartStr = getLocalDateString(d);
-    } else if (selectedRange === 'today') {
-      periodStartStr = todayStr;
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      periodStart = start;
+      periodEnd = now;
     }
+    // 'all' => periodStart/periodEnd stay null (no date filter)
 
     return adCosts.filter((ad) => {
       // Date filter
-      if (selectedRange !== 'all') {
-        const adStart = ad.date;
-        const adEnd = ad.endDate || ad.date;
-        const isInRange = adStart <= periodEndStr && adEnd >= periodStartStr;
+      if (selectedRange !== 'all' && periodStart && periodEnd) {
+        const adStartDate = new Date(ad.date);
+        const adEndDate = new Date(ad.endDate || ad.date);
+
+        const isInRange =
+          adStartDate <= periodEnd && adEndDate >= periodStart;
+
         if (!isInRange) return false;
       }
 
@@ -171,7 +180,10 @@ export const AdCostsView: React.FC<AdCostsViewProps> = ({
             {T.totalLabel}
           </p>
           <h2 className="text-3xl font-black">
-            ${totalSpend.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            ${totalSpend.toLocaleString(undefined, { 
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
           </h2>
         </div>
 
@@ -243,25 +255,3 @@ export const AdCostsView: React.FC<AdCostsViewProps> = ({
   );
 };
 
-interface SummaryChipProps {
-  label: string;
-  value: string | number;
-  icon: LucideIcon;
-  color: string;
-}
-
-const SummaryChip: React.FC<SummaryChipProps> = ({ label, value, icon: Icon, color }) => (
-  <div className="flex flex-col min-w-[110px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-3 rounded-2xl shadow-sm transition-colors shrink-0">
-    <div className="flex items-center space-x-1.5 mb-1.5">
-      <div className={`p-1 rounded-lg ${color}`}>
-        <Icon size={12} strokeWidth={2.5} />
-      </div>
-      <span className="text-[9px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">
-        {label}
-      </span>
-    </div>
-    <p className="text-xs font-black text-slate-900 dark:text-slate-50 truncate">
-      {value}
-    </p>
-  </div>
-);
