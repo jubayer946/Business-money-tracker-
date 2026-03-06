@@ -12,11 +12,16 @@ interface SaleItemProps {
 
 export const SaleItem: React.FC<SaleItemProps> = ({ sale, expanded, onExpand, onEdit, onDelete }) => {
   const getStatusStyles = (status?: string) => {
-    switch (status) {
-      case 'Paid': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
-      case 'Pending': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
-      case 'Refunded': return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
-      default: return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+    const effectiveStatus = status || 'Paid';
+    switch (effectiveStatus) {
+      case 'Paid':
+        return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300';
+      case 'Pending':
+        return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
+      case 'Refunded':
+        return 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300';
+      default:
+        return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
     }
   };
 

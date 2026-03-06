@@ -8,9 +8,9 @@ import {
   ShoppingCart, 
   TrendingUp, 
   Download, 
-  Check, 
-  LucideIcon
+  Check
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import Fuse from 'fuse.js';
 
 type DateRange = 'all' | 'today' | '7d' | '30d';

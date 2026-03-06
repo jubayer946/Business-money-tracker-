@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, TrendingUp, Info, CheckCircle2, LucideIcon } from 'lucide-react';
+import { AlertCircle, TrendingUp, Info, CheckCircle2 } from 'lucide-react';
 import { Insight } from '../hooks/useBusinessInsights';
 
 interface InsightCardProps {

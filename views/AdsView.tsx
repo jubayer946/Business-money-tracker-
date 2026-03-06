@@ -7,9 +7,9 @@ import {
   Trash2, 
   BarChart3, 
   Activity, 
-  Calendar,
-  LucideIcon 
+  Calendar
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { getLocalDateString } from '../utils';
 
 type DateRange = 'all' | 'today' | '7d' | '30d' | 'month';
@@ -54,45 +54,55 @@ export const AdsView: React.FC<AdsViewProps> = ({
 }) => {
   const [selectedRange, setSelectedRange] = useState<DateRange>('all');
 
-  const filteredAds = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    const now = new Date();
+  const now = new Date();
+  const todayStr = getLocalDateString(now);
 
-    // Define the date range as real Date objects
-    let periodStart: Date | null = null;
-    let periodEnd: Date | null = null;
+  const { periodStartStr, periodEndStr } = useMemo(() => {
+    if (selectedRange === 'all') {
+      return { periodStartStr: '', periodEndStr: '' }; // unused when 'all'
+    }
 
     if (selectedRange === 'today') {
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      periodStart = start;
-      periodEnd = end;
-    } else if (selectedRange === '7d') {
-      const start = new Date(now);
-      start.setDate(now.getDate() - 6);
-      periodStart = start;
-      periodEnd = now;
-    } else if (selectedRange === '30d') {
-      const start = new Date(now);
-      start.setDate(now.getDate() - 29);
-      periodStart = start;
-      periodEnd = now;
-    } else if (selectedRange === 'month') {
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      periodStart = start;
-      periodEnd = now;
+      return { periodStartStr: todayStr, periodEndStr: todayStr };
     }
-    // 'all' => periodStart/periodEnd stay null (no date filter)
+
+    if (selectedRange === '7d') {
+      const d = new Date();
+      d.setDate(now.getDate() - 6); // last 7 days incl. today
+      return {
+        periodStartStr: getLocalDateString(d),
+        periodEndStr: todayStr,
+      };
+    }
+
+    if (selectedRange === '30d') {
+      const d = new Date();
+      d.setDate(now.getDate() - 29); // last 30 days incl. today
+      return {
+        periodStartStr: getLocalDateString(d),
+        periodEndStr: todayStr,
+      };
+    }
+
+    if (selectedRange === 'month') {
+      const d = new Date(now.getFullYear(), now.getMonth(), 1);
+      return {
+        periodStartStr: getLocalDateString(d),
+        periodEndStr: todayStr,
+      };
+    }
+
+    return { periodStartStr: '', periodEndStr: '' };
+  }, [selectedRange, todayStr]);
+
+  const filteredAds = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
 
     return ads.filter((ad) => {
-      // Date filter
-      if (selectedRange !== 'all' && periodStart && periodEnd) {
-        const adStartDate = new Date(ad.date);
-        const adEndDate = new Date(ad.endDate || ad.date);
-
-        const isInRange =
-          adStartDate <= periodEnd && adEndDate >= periodStart;
-
+      if (selectedRange !== 'all') {
+        const adStart = ad.date;
+        const adEnd = ad.endDate || ad.date;
+        const isInRange = adStart <= periodEndStr && adEnd >= periodStartStr;
         if (!isInRange) return false;
       }
 
@@ -103,15 +113,35 @@ export const AdsView: React.FC<AdsViewProps> = ({
         ad.platform.toLowerCase().includes(q)
       );
     });
-  }, [ads, searchQuery, selectedRange]);
+  }, [ads, searchQuery, selectedRange, periodStartStr, periodEndStr]);
 
   const totalSpend = useMemo(() => 
     filteredAds.reduce((acc, ad) => acc + ad.amount, 0), 
   [filteredAds]);
 
-  const totalRevenue = useMemo(() => 
-    sales.reduce((acc, s) => acc + (s.status === 'Paid' ? s.amount : 0), 0),
-  [sales]);
+  const filteredSales = useMemo(() => {
+    if (selectedRange === 'all') {
+      return sales;
+    }
+
+    return sales.filter((s) => {
+      // status: treat undefined as "Paid" if that's your rule
+      const effectiveStatus = s.status ?? 'Paid';
+      if (effectiveStatus !== 'Paid') return false;
+
+      // date range
+      const saleDate = s.date; // must be 'YYYY-MM-DD'
+      return (
+        saleDate >= periodStartStr &&
+        saleDate <= periodEndStr
+      );
+    });
+  }, [sales, selectedRange, periodStartStr, periodEndStr]);
+
+  const totalRevenue = useMemo(
+    () => filteredSales.reduce((acc, s) => acc + s.amount, 0),
+    [filteredSales]
+  );
 
   const globalRoas = totalSpend > 0 ? (totalRevenue / totalSpend).toFixed(1) : '0.0';
 

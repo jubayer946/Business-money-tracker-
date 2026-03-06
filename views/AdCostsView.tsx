@@ -67,42 +67,31 @@ export const AdCostsView: React.FC<AdCostsViewProps> = ({
   const filteredAndSortedAdCosts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const now = new Date();
+    const todayStr = getLocalDateString(now);
 
-    // Define the date range as real Date objects
-    let periodStart: Date | null = null;
-    let periodEnd: Date | null = null;
+    let periodStartStr = '';
+    const periodEndStr = todayStr;
 
-    if (selectedRange === 'today') {
-      const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
-      periodStart = start;
-      periodEnd = end;
-    } else if (selectedRange === '7d') {
-      const start = new Date(now);
-      start.setDate(now.getDate() - 6);
-      periodStart = start;
-      periodEnd = now;
+    if (selectedRange === '7d') {
+      const d = new Date();
+      d.setDate(now.getDate() - 6); // last 7 days incl. today
+      periodStartStr = getLocalDateString(d);
     } else if (selectedRange === '30d') {
-      const start = new Date(now);
-      start.setDate(now.getDate() - 29);
-      periodStart = start;
-      periodEnd = now;
+      const d = new Date();
+      d.setDate(now.getDate() - 29); // last 30 days incl. today
+      periodStartStr = getLocalDateString(d);
     } else if (selectedRange === 'month') {
-      const start = new Date(now.getFullYear(), now.getMonth(), 1);
-      periodStart = start;
-      periodEnd = now;
+      const d = new Date(now.getFullYear(), now.getMonth(), 1);
+      periodStartStr = getLocalDateString(d);
+    } else if (selectedRange === 'today') {
+      periodStartStr = todayStr;
     }
-    // 'all' => periodStart/periodEnd stay null (no date filter)
 
     return adCosts.filter((ad) => {
-      // Date filter
-      if (selectedRange !== 'all' && periodStart && periodEnd) {
-        const adStartDate = new Date(ad.date);
-        const adEndDate = new Date(ad.endDate || ad.date);
-
-        const isInRange =
-          adStartDate <= periodEnd && adEndDate >= periodStart;
-
+      if (selectedRange !== 'all') {
+        const adStart = ad.date;
+        const adEnd = ad.endDate || ad.date;
+        const isInRange = adStart <= periodEndStr && adEnd >= periodStartStr;
         if (!isInRange) return false;
       }
 
