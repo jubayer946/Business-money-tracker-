@@ -64,6 +64,8 @@ export const AdCostsView: React.FC<AdCostsViewProps> = ({
   const [selectedRange, setSelectedRange] = useState<DateRange>('all');
   const [showExportSuccess, setShowExportSuccess] = useState(false);
 
+  const hasFilters = selectedRange !== 'all' || searchQuery.trim().length > 0;
+
   const filteredAndSortedAdCosts = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     const now = new Date();
@@ -74,11 +76,13 @@ export const AdCostsView: React.FC<AdCostsViewProps> = ({
 
     if (selectedRange === '7d') {
       const d = new Date();
-      d.setDate(now.getDate() - 6); // last 7 days incl. today
+      // last 7 days including today → today and previous 6 days
+      d.setDate(now.getDate() - 6);
       periodStartStr = getLocalDateString(d);
     } else if (selectedRange === '30d') {
       const d = new Date();
-      d.setDate(now.getDate() - 29); // last 30 days incl. today
+      // last 30 days including today → today and previous 29 days
+      d.setDate(now.getDate() - 29);
       periodStartStr = getLocalDateString(d);
     } else if (selectedRange === 'month') {
       const d = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -235,7 +239,9 @@ export const AdCostsView: React.FC<AdCostsViewProps> = ({
           {filteredAndSortedAdCosts.length === 0 && (
             <div className="py-16 text-center text-slate-400 flex flex-col items-center gap-3 animate-in fade-in">
               <Megaphone size={28} className="opacity-20" />
-              <p className="text-sm font-medium">{T.noAds}</p>
+              <p className="text-sm font-medium">
+                {hasFilters ? 'No expenses match your filters.' : T.noAds}
+              </p>
             </div>
           )}
         </div>
