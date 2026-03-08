@@ -121,7 +121,8 @@ export const AdsView: React.FC<AdsViewProps> = ({
 
   const filteredSales = useMemo(() => {
     if (selectedRange === 'all') {
-      return sales;
+      // still enforce "Paid" (treat undefined as Paid for legacy records)
+      return sales.filter((s) => (s.status ?? 'Paid') === 'Paid');
     }
 
     return sales.filter((s) => {
